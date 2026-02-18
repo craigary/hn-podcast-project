@@ -30,6 +30,9 @@ jobs:
       - name: 安装依赖
         run: bun install
 
+      - name: 安装 Wrangler
+        run: bun add -g wrangler
+
       - name: 构建网站
         run: bun run build
 
@@ -39,3 +42,4 @@ jobs:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: apps/web
+          wranglerVersion: '*'
