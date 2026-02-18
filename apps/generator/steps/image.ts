@@ -43,7 +43,7 @@ export const generateCoverImage = async (prompt: string): Promise<ArrayBuffer> =
 
   const res = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${Bun.env.POLLINATIONS_API_KEY}`
+      Authorization: `Bearer ${process.env.POLLINATIONS_API_KEY}`
     }
   })
 
