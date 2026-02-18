@@ -281,8 +281,7 @@ export const generatePodcastAudio = async (
 
   return new Promise<string>((resolve, reject) => {
     finalCommand
-      .complexFilter(filterComplex)
-      .map('[final_a]')
+      .complexFilter(filterComplex, '[final_a]')
       .on('start', (cmd) => console.log(`  🚀 运行命令: ${cmd}`))
       .on('error', (err) => {
         console.error('  ❌ FFmpeg 混音失败:', err.message)
