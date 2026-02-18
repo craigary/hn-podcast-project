@@ -1,19 +1,17 @@
 {
   "name": "podcast-monorepo",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
-    "gen": "bun run --elide-lines=0 --filter generator start",
-    "dev": "bun run --filter web dev",
-    "build": "bun run --filter web build",
-    "preview": "bun run --filter web preview",
-    "deploy": "bun run build"
+    "gen": "pnpm --filter generator start",
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "preview": "pnpm --filter web preview",
+    "deploy": "pnpm run build"
   },
-  "resolutions": {
-    "vite": "^7.3.1"
+  "pnpm": {
+    "overrides": {
+      "vite": "^7.3.1"
+    }
   },
   "devDependencies": {
     "sharp": "^0.34.5"
