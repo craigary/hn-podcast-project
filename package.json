@@ -8,7 +8,9 @@
   "scripts": {
     "gen": "bun run --elide-lines=0 --filter generator start",
     "dev": "bun run --filter web dev",
-    "build": "bun run --filter web build"
+    "build": "bun run --filter web build",
+    "preview": "bun run --filter web preview",
+    "deploy": "bun run build"
   },
   "resolutions": {
     "vite": "^7.3.1"
