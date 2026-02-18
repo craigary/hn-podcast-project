@@ -23,6 +23,7 @@
     "@iconify-json/lucide": "^1.2.90",
     "@iconify-json/simple-icons": "^1.2.70",
     "typescript": "^5.9.3",
-    "unplugin-icons": "^23.0.1"
+    "unplugin-icons": "^23.0.1",
+    "wrangler": "^4.66.0"
   }
 }
