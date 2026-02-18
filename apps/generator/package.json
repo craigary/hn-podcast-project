@@ -1,9 +1,11 @@
 {
   "name": "generator",
   "private": true,
+  "type": "module",
   "scripts": {
-    "start": "bun main.ts",
-    "sync-kv": "bun sync-kv.ts"
+    "gen": "tsx main.ts",
+    "start": "tsx main.ts",
+    "sync-kv": "tsx sync-kv.ts"
   },
   "dependencies": {
     "@ai-sdk/cerebras": "^2.0.33",
@@ -20,7 +22,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/fluent-ffmpeg": "^2.1.28"
+    "@types/node": "^22.0.0",
+    "@types/fluent-ffmpeg": "^2.1.28",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
   }
 }
