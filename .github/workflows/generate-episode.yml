@@ -2,8 +2,7 @@ name: 生成播客剧集
 
 on:
   schedule:
-    # 每天 UTC 08:00 运行（即 PST 00:00 / 北京时间 16:00）
-    # 此时 PST 前一天已完全结束，确保昨天的 HN 故事数据充足
+    # 每天 UTC 08:00 运行（即北京时间 16:00）
     - cron: '0 8 * * *'
   workflow_dispatch:
     inputs:
@@ -24,15 +23,21 @@ jobs:
 
     steps:
       - name: 签出代码
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      - name: 安装 Bun
-        uses: oven-sh/setup-bun@v2
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
         with:
-          bun-version: latest
+          version: 10
+
+      - name: 设置 Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
 
       - name: 安装依赖
-        run: bun install
+        run: pnpm install
 
       - name: 安装 FFmpeg
         uses: FedericoCarboni/setup-ffmpeg@v3
@@ -46,7 +51,7 @@ jobs:
           if [ -n "${{ inputs.date }}" ]; then
             ARGS="$ARGS --date ${{ inputs.date }}"
           fi
-          bun run gen $ARGS
+          pnpm run gen $ARGS
         env:
           CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
@@ -66,7 +71,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add apps/web/src/content/episodes/
-          # 仅在有新文件时提交
+          
           if git diff --cached --quiet; then
             echo "没有新剧集生成，跳过提交"
           else
