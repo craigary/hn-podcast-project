@@ -1,13 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "hn-podcast",
-  "main": "./dist/_worker.js/index.js",
   "compatibility_date": "2025-02-18",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-  "assets": {
-    "binding": "ASSETS",
-    "directory": "./dist"
-  },
+  "compatibility_flags": ["nodejs_compat"],
   "observability": {
     "enabled": true
   }
