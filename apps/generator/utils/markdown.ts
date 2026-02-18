@@ -1,7 +1,6 @@
 import { PodcastBlueprint } from '../ai/prompts/blueprint'
 import { SegmentScript } from '../ai/prompts/script'
 import { ProcessedStory } from '../types'
-import { lintMarkdown } from '@lint-md/core'
 
 interface FullScript {
   intro: SegmentScript

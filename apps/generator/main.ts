@@ -219,7 +219,7 @@ async function main() {
 
   // Step 6: Convert to Markdown and save locally
   console.log('\n📄 生成 Markdown 文件...')
-  const r2PublicUrl = Bun.env.CF_R2_PUBLIC_URL || ''
+  const r2PublicUrl = process.env.CF_R2_PUBLIC_URL || ''
   const audioUrl = `${r2PublicUrl}/episodes/${date}/audio.mp3`
   const coverImageUrl = `${r2PublicUrl}/episodes/${date}/cover.png`
   const markdown = convertScriptToMarkdown(
