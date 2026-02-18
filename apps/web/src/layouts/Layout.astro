@@ -1,0 +1,88 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import '../styles/global.css'
+import Header from '../components/Header.astro'
+import AudioPlayer from '../components/AudioPlayer.astro'
+import SEO from '../components/SEO.astro'
+import { podcastConfig } from '@hn/config'
+
+interface Props {
+  title?: string
+  description?: string
+  image?: string
+  type?: 'website' | 'article'
+  publishedTime?: string
+  author?: string
+  canonical?: string
+}
+
+const {
+  title = podcastConfig.podcast.name,
+  description,
+  image,
+  type,
+  publishedTime,
+  author,
+  canonical
+} = Astro.props
+const currentPath = Astro.url.pathname
+---
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO Meta Tags -->
+  <SEO
+    title={title}
+    description={description}
+    image={image}
+    type={type}
+    publishedTime={publishedTime}
+    author={author}
+    canonical={canonical}
+  />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/font/chill-jinshusong/result.css" />
+  <ClientRouter />
+  <script is:inline>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+</head>
+<body class="bg-pg text-tx2 font-sans-body antialiased min-h-screen transition-colors duration-300">
+
+  <Header currentPath={currentPath} />
+
+  <!-- Main content -->
+  <slot />
+
+  <!-- Persistent audio player -->
+  <AudioPlayer transition:persist="audio-player" />
+
+  <script>
+    import { setupTheme } from '../scripts/theme'
+    import { setupAudioPlayer } from '../scripts/audioPlayer'
+    import { setupMobileMenu } from '../scripts/mobileMenu'
+
+    function setupPage() {
+      setupTheme()
+      setupMobileMenu()
+      setupAudioPlayer()
+    }
+
+    // Run on initial load and after View Transitions page swaps
+    setupPage()
+    document.addEventListener('astro:after-swap', setupPage)
+  </script>
+
+</body>
+</html>

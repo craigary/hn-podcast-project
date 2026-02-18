@@ -1,0 +1,39 @@
+---
+import HnLinkList from './HnLinkList.astro'
+import PollSection from './PollSection.astro'
+
+interface Props {
+  hnLinks: { title: string; url: string }[]
+  episodeId?: number
+  // pollOptions: { label: string; votes: number }[]
+  changelog: { date: string; text: string }[]
+}
+const { hnLinks, episodeId, changelog } = Astro.props
+---
+
+<HnLinkList links={hnLinks} episodeId={episodeId} />
+
+<div class="border-t border-bd my-5"></div>
+
+<!-- 路线图摘要 -->
+<div class="flex items-center justify-between mb-4">
+  <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase">路线图</h2>
+  <a href="/roadmap" class="text-xs text-ac hover:text-ac-h transition-colors">查看全部 →</a>
+</div>
+<div class="space-y-3 mb-6">
+  {
+    changelog.map(item => (
+      <div class="flex gap-2.5">
+        <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-ac shrink-0" />
+        <div>
+          <div class="font-mono-label text-xs text-tx4 mb-0.5">{item.date}</div>
+          <p class="text-xs text-tx2 leading-relaxed">{item.text}</p>
+        </div>
+      </div>
+    ))
+  }
+</div>
+
+<div class="border-t border-bd my-5"></div>
+
+<!-- <PollSection options={pollOptions} /> -->

@@ -1,0 +1,125 @@
+---
+import IconLucideRss from '~icons/lucide/rss'
+import IconLucideSun from '~icons/lucide/sun'
+import IconLucideMoon from '~icons/lucide/moon'
+import IconLucideMenu from '~icons/lucide/menu'
+import IconLucideX from '~icons/lucide/x'
+import { podcastConfig } from '@hn/config'
+import RssModal from './RssModal.astro'
+
+interface Props {
+  currentPath: string
+}
+
+const { currentPath } = Astro.props
+
+const navLinks = [
+  { href: '/', label: '首页' },
+  { href: '/roadmap', label: '路线图' },
+  { href: '/about', label: '关于' },
+]
+---
+
+<header class="border-b border-bd sticky top-0 bg-pg/90 backdrop-blur-md z-40">
+  <div class="max-w-350 mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+    <a href="/" class="flex items-baseline gap-2 md:gap-3 no-underline">
+      <span class="text-tx1 font-serif-display text-lg md:text-xl tracking-tight">{podcastConfig.podcast.name}</span>
+      <!-- <span class="text-tx4 text-xs md:text-sm hidden sm:inline">{podcastConfig.podcast.tagline}</span> -->
+    </a>
+    <div class="flex items-center gap-3 md:gap-5">
+      <!-- Desktop nav -->
+      <nav class="hidden md:flex items-center gap-5" role="navigation" aria-label="主导航">
+        {navLinks.map((link) => (
+          <a
+            href={link.href}
+            aria-current={(currentPath.startsWith(link.href) && link.href !== '/') || currentPath === link.href ? 'page' : undefined}
+            class:list={[
+              'text-sm transition-colors',
+              currentPath.startsWith(link.href) && link.href !== '/' ? 'text-tx1 font-medium' : currentPath === link.href ? 'text-tx1 font-medium' : 'text-tx3 hover:text-tx1',
+            ]}
+          >
+            {link.label}
+          </a>
+        ))}
+        <button
+          id="subscribe-btn"
+          class="inline-flex items-center gap-1.5 text-sm text-tx3 hover:text-tx1 transition-colors"
+          aria-label="打开订阅对话框"
+        >
+          <IconLucideRss class="w-3.5 h-3.5" />
+          订阅
+        </button>
+        <a href="/how-to-listen" class="text-sm bg-ac text-ac-on px-4 py-1.5 rounded-full font-semibold hover:bg-ac-h transition-colors">如何收听</a>
+      </nav>
+      <!-- Theme toggle -->
+      <button
+        id="theme-toggle"
+        class="w-8 h-8 flex items-center justify-center rounded-full border border-bd text-tx3 hover:text-tx1 hover:border-tx4 transition-colors"
+        aria-label="切换主题"
+      >
+        <IconLucideSun class="w-4 h-4 hidden dark:block" />
+        <IconLucideMoon class="w-4 h-4 block dark:hidden" />
+      </button>
+      <!-- Mobile hamburger -->
+      <button
+        id="menu-toggle"
+        class="w-8 h-8 flex md:hidden items-center justify-center text-tx3 hover:text-tx1 transition-colors"
+        aria-label="菜单"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+      >
+        <IconLucideMenu id="icon-menu" class="w-5 h-5" />
+        <IconLucideX id="icon-close" class="w-5 h-5 hidden" />
+      </button>
+    </div>
+  </div>
+  <!-- Mobile menu dropdown -->
+  <div id="mobile-menu" class="hidden md:hidden border-t border-bd bg-pg" role="navigation" aria-label="移动端导航">
+    <div class="px-4 py-4 space-y-1">
+      {navLinks.map((link) => (
+        <a
+          href={link.href}
+          aria-current={(currentPath.startsWith(link.href) && link.href !== '/') || currentPath === link.href ? 'page' : undefined}
+          class:list={[
+            'block py-2 px-3 rounded-lg text-sm transition-colors',
+            (currentPath.startsWith(link.href) && link.href !== '/') || currentPath === link.href ? 'text-tx1 font-medium bg-sf-card' : 'text-tx3 hover:text-tx1 hover:bg-sf-card',
+          ]}
+        >
+          {link.label}
+        </a>
+      ))}
+      <button
+        id="subscribe-btn-mobile"
+        class="w-full text-left flex items-center gap-2 py-2 px-3 rounded-lg text-sm text-tx3 hover:text-tx1 hover:bg-sf-card transition-colors"
+        aria-label="打开订阅对话框"
+      >
+        <IconLucideRss class="w-3.5 h-3.5" />
+        订阅
+      </button>
+      <div class="pt-2">
+        <a href="/how-to-listen" class="block text-center text-sm bg-ac text-ac-on px-4 py-2 rounded-full font-semibold hover:bg-ac-h transition-colors">收听最新</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<RssModal />
+
+<script>
+  function setupSubscribeModal() {
+    const modal = document.getElementById('rss-modal');
+    const subscribeBtn = document.getElementById('subscribe-btn');
+    const subscribeBtnMobile = document.getElementById('subscribe-btn-mobile');
+
+    function openModal() {
+      modal?.classList.remove('hidden');
+      modal?.classList.add('flex');
+    }
+
+    subscribeBtn?.addEventListener('click', openModal);
+    subscribeBtnMobile?.addEventListener('click', openModal);
+  }
+
+  setupSubscribeModal();
+  document.addEventListener('astro:after-swap', setupSubscribeModal);
+</script>

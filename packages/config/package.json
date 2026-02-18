@@ -1,0 +1,10 @@
+{
+  "name": "@hn/config",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.ts",
+  "private": true,
+  "devDependencies": {
+    "@types/node": "^25.2.3"
+  }
+}

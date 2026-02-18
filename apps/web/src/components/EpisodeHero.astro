@@ -1,0 +1,55 @@
+---
+import { Image } from 'astro:assets'
+
+interface Props {
+  slug: string
+  epId: number
+  date: string
+  title: string
+  desc: string
+  coverImage?: string
+}
+const { slug, epId, date, title, desc, coverImage } = Astro.props
+---
+
+<a
+  href={`/${slug}`}
+  class="block overflow-hidden mb-8 relative group cursor-pointer no-underline"
+>
+  <div class="relative aspect-video md:aspect-16/7 overflow-hidden">
+    <!-- Background Image -->
+    {
+      coverImage ? (
+        <Image
+          src={coverImage}
+          alt={title}
+          width={1200}
+          height={630}
+          loading="eager"
+          class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      ) : (
+        <div class="absolute inset-0 bg-linear-to-br from-sf-dim via-sf-card to-sf transition-transform duration-500 group-hover:scale-105">
+          <div class="absolute top-[15%] left-[10%] w-32 h-32 rounded-full bg-ac/10 blur-xl"></div>
+          <div class="absolute top-[30%] right-[20%] w-48 h-48 rounded-full bg-tx4/10 blur-2xl"></div>
+          <div class="absolute bottom-[10%] left-[40%] w-24 h-24 rounded-full bg-ac/10 blur-lg"></div>
+          <div class="absolute top-[20%] right-[30%] w-40 h-40 rounded-full border border-tx4/10"></div>
+          <div class="absolute bottom-[25%] right-[25%] w-52 h-52 rounded-full bg-linear-to-br from-tx4/15 to-transparent"></div>
+        </div>
+      )
+    }
+
+    <!-- Text Box - Bottom Right -->
+    <div class="absolute bottom-0 right-0 max-w-2xl bg-sf-dim/75 dark:bg-sf/85 backdrop-blur-sm p-4 md:p-6">
+      <div class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-3">
+        精选 · {date} · EP{epId}
+      </div>
+      <h2 class="font-serif-display text-2xl md:text-3xl lg:text-4xl text-tx1 mb-3 leading-tight">
+        {title}
+      </h2>
+      <p class="text-sm md:text-base text-tx3 leading-relaxed line-clamp-1">
+        {desc}
+      </p>
+    </div>
+  </div>
+</a>

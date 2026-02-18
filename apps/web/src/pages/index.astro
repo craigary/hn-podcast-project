@@ -1,0 +1,143 @@
+---
+import Layout from '../layouts/Layout.astro'
+import { getCollection } from 'astro:content'
+import EpisodeHero from '../components/EpisodeHero.astro'
+import EpisodeItem from '../components/EpisodeItem.astro'
+import LeftSidebar from '../components/LeftSidebar.astro'
+import RightSidebar from '../components/RightSidebar.astro'
+import HnLinkList from '../components/HnLinkList.astro'
+import PollSection from '../components/PollSection.astro'
+import PlatformLinks from '../components/PlatformLinks.astro'
+import IconLucideRss from '~icons/lucide/rss'
+import IconLucideZap from '~icons/lucide/zap'
+import { podcastConfig } from '@hn/config'
+import { entries } from './roadmap.astro'
+
+const episodes = await getCollection('episodes')
+const sorted = episodes.sort((a, b) => b.data.id - a.data.id)
+const [latest, ...rest] = sorted
+
+if (!latest) {
+  throw new Error('No episodes found in the "episodes" collection. Ensure content files exist and the glob loader base path is correct.')
+}
+
+// Transform showNotes to hnLinks format if hnLinks doesn't exist
+const latestHnLinks = latest.data.hnLinks ?? latest.data.showNotes?.map(note => ({
+  title: note.title,
+  url: note.hnUrl,
+})) ?? []
+
+// SEO metadata
+const description = `${podcastConfig.podcast.tagline} 最新一期：${latest.data.title}`
+const ogImage = latest.data.coverImage
+
+// Transform roadmap entries to changelog format for sidebar
+const changelog = entries.map(entry => ({
+  date: entry.date,
+  text: entry.title
+}))
+---
+
+<Layout
+  title={podcastConfig.podcast.name}
+  description={description}
+  image={ogImage}
+  type="website"
+>
+  <div class="max-w-350 mx-auto grid grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_280px]">
+
+    <!-- Left sidebar -->
+    <aside class="border-r border-bd px-5 py-8 hidden lg:block">
+      <LeftSidebar />
+    </aside>
+
+    <!-- Center column -->
+    <main class="px-5 md:px-8 py-8 min-w-0">
+
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase">最新</h2>
+        <button id="open-rss-modal" class="flex items-center gap-1.5 text-xs text-tx4 hover:text-tx1 transition-colors cursor-pointer">
+          <IconLucideRss class="w-3 h-3" />
+          RSS
+        </button>
+      </div>
+
+      <EpisodeHero
+        slug={latest.id}
+        epId={latest.data.id}
+        date={latest.data.date}
+        title={latest.data.title}
+        desc={latest.data.desc}
+        coverImage={latest.data.coverImage}
+      />
+
+      <div class="divide-y divide-bd">
+        {rest.map(ep => (
+          <EpisodeItem
+            slug={ep.id}
+            epId={ep.data.id}
+            date={ep.data.date}
+            title={ep.data.title}
+            desc={ep.data.desc}
+            coverImage={ep.data.coverImage}
+          />
+        ))}
+      </div>
+
+      <!-- Mobile/Tablet sections -->
+      <div class="xl:hidden mt-10 space-y-8">
+        {latestHnLinks.length > 0 && (
+          <>
+            <HnLinkList links={latestHnLinks} episodeId={latest.data.id} />
+            <div class="border-t border-bd"></div>
+          </>
+        )}
+
+        <!-- <PollSection options={pollOptions} /> -->
+        <div class="border-t border-bd"></div>
+
+        <section>
+          <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">收听平台</h2>
+          <PlatformLinks layout="grid" />
+        </section>
+        <div class="border-t border-bd"></div>
+
+        <div class="p-3 rounded-lg bg-sf-card border border-bd">
+          <div class="flex items-center gap-1.5 mb-2">
+            <IconLucideZap class="w-3.5 h-3.5 text-ac" />
+            <span class="font-mono-label text-xs tracking-widest text-ac uppercase">AI 生成</span>
+          </div>
+          <p class="text-xs text-tx3 leading-relaxed">
+            本播客由 AI 自动生成，包括话题筛选、对话脚本和语音合成。<a
+              href="/about"
+              class="text-ac hover:text-ac-h transition-colors">了解更多 →</a>
+          </p>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Right sidebar -->
+    <aside class="border-l border-bd px-5 py-8 hidden xl:block">
+      <RightSidebar hnLinks={latestHnLinks} episodeId={latest.data.id} changelog={changelog} />
+    </aside>
+
+  </div>
+</Layout>
+
+<script>
+  function initRssButton() {
+    const openBtn = document.getElementById('open-rss-modal')
+    const modal = document.getElementById('rss-modal')
+
+    if (!openBtn || !modal) return
+
+    openBtn.addEventListener('click', () => {
+      modal.classList.remove('hidden')
+      modal.classList.add('flex')
+    })
+  }
+
+  initRssButton()
+  document.addEventListener('astro:after-swap', initRssButton)
+</script>

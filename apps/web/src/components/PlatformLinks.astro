@@ -1,0 +1,89 @@
+---
+import IconLucideRss from '~icons/lucide/rss'
+import IconApplePodcasts from '~icons/simple-icons/applepodcasts'
+import IconSpotify from '~icons/simple-icons/spotify'
+import IconLucidePodcast from '~icons/lucide/podcast'
+import { podcastConfig } from '@hn/config'
+
+interface Props {
+  layout?: 'list' | 'grid'
+}
+
+const { layout = 'list' } = Astro.props
+
+const iconMap: Record<string, any> = {
+  'simple-icons:applepodcasts': IconApplePodcasts,
+  'simple-icons:spotify': IconSpotify,
+  'lucide:podcast': IconLucidePodcast,
+  'lucide:rss': IconLucideRss,
+}
+
+const platforms = podcastConfig.platforms.map(p => ({
+  name: p.name,
+  icon: p.icon,
+  url: p.url,
+  available: p.status === 'active',
+  isRss: p.isRss
+}))
+---
+
+<div class:list={[
+  layout === 'list' ? 'flex flex-col gap-1.5' : 'grid grid-cols-2 gap-2'
+]}>
+  {platforms.map(p => {
+    const IconComponent = iconMap[p.icon];
+
+    return (
+      <button
+        data-platform={p.name}
+        data-is-rss={p.isRss}
+        data-url={p.url}
+        class:list={[
+          "group flex items-center  hover:bg-sf-card-h transition-colors cursor-pointer text-left rounded-lg border border-bd px-3 py-2",
+          layout === 'list' && "w-full gap-2.5",
+          layout === 'grid' && "gap-2 "
+        ]}
+      >
+        {/* 图标渲染区域 */}
+        {IconComponent && <IconComponent class="w-4 h-4 text-tx3 group-hover:text-tx1 transition-colors shrink-0" />}
+
+        {/* 平台名称 */}
+        <span class="text-tx3 text-xs group-hover:text-tx1 transition-colors truncate">
+          {p.name}
+        </span>
+
+        {/* 即将上线状态 */}
+        {!p.available && (
+          <span class="ml-auto text-tx3 text-xs px-1 py-px rounded-sm border border-tx3/20">即将</span>
+        )}
+      </button>
+    )
+  })}
+</div>
+
+<script>
+  function setupPlatformLinks() {
+    const buttons = document.querySelectorAll('[data-platform]');
+    buttons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const isRss = button.getAttribute('data-is-rss') === 'true';
+        const url = button.getAttribute('data-url');
+
+        if (isRss) {
+          e.preventDefault();
+          const modal = document.getElementById('rss-modal');
+          if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+          }
+        } else if (url) {
+          // 如果有 URL，打开链接
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+      });
+    });
+  }
+
+  setupPlatformLinks();
+  document.addEventListener('astro:after-swap', setupPlatformLinks);
+</script>

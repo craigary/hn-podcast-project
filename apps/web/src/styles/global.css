@@ -1,0 +1,62 @@
+@import 'tailwindcss';
+
+:root {
+  --page: #f6f6ef;
+  --surface: #ffffff;
+  --surface-dim: #eee8dc;
+  --surface-card: #f0ebe0;
+  --surface-card-hover: #e8e3d8;
+  --border: #d4cbb8;
+  --text-1: #1a1714;
+  --text-2: #3a3630;
+  --text-3: #4a4238;
+  --text-4: #5a5248;
+  --accent: #ff6600;
+  --accent-hover: #e05a00;
+  --accent-on: #ffffff;
+  --overlay-from: rgba(255, 251, 235, 1);
+  --overlay-mid: rgba(255, 251, 235, 0.9);
+  --yt-fill: #ffffff;
+}
+
+.dark {
+  --page: #1a1714;
+  --surface: #23201a;
+  --surface-dim: #2a2620;
+  --surface-card: #33302a;
+  --surface-card-hover: #3d3a34;
+  --border: #33302a;
+  --text-1: #f0ebe0;
+  --text-2: #ddd6c8;
+  --text-3: #6b6358;
+  --text-4: #8a8070;
+  --accent: #ff6600;
+  --accent-hover: #e05a00;
+  --accent-on: #1a1714;
+  --overlay-from: rgba(26, 23, 20, 1);
+  --overlay-mid: rgba(26, 23, 20, 0.9);
+  --yt-fill: #1a1714;
+}
+
+@theme {
+  --font-serif-display: '寒蝉锦书宋', 'Instrument Serif', Georgia, serif;
+  --font-mono-label: 'JetBrains Mono', 'SF Mono', monospace;
+  --font-sans-body: 'DM Sans', 'Helvetica Neue', sans-serif;
+
+  --color-pg: var(--page);
+  --color-sf: var(--surface);
+  --color-sf-dim: var(--surface-dim);
+  --color-sf-card: var(--surface-card);
+  --color-sf-card-h: var(--surface-card-hover);
+  --color-bd: var(--border);
+  --color-tx1: var(--text-1);
+  --color-tx2: var(--text-2);
+  --color-tx3: var(--text-3);
+  --color-tx4: var(--text-4);
+  --color-ac: var(--accent);
+  --color-ac-h: var(--accent-hover);
+  --color-ac-on: var(--accent-on);
+  --color-ov-from: var(--overlay-from);
+  --color-ov-mid: var(--overlay-mid);
+  --color-yt-fill: var(--yt-fill);
+}

@@ -1,0 +1,180 @@
+---
+import Layout from '../layouts/Layout.astro'
+import IconLucideRss from '~icons/lucide/rss'
+import IconLucideInfo from '~icons/lucide/info'
+import PlatformLinks from '../components/PlatformLinks.astro'
+import { podcastConfig } from '@hn/config'
+
+const rssUrl = podcastConfig.platforms.find(i=>i.isRss)?.url ? podcastConfig.platforms.find(i=>i.isRss)?.url : `${podcastConfig.site.url}/rss.xml`
+const description = `了解如何通过 RSS、播客平台或在线收听 ${podcastConfig.podcast.name}。`
+---
+
+<Layout
+  title="如何收听"
+  description={description}
+  type="website"
+>
+  <div class="max-w-175 mx-auto px-5 md:px-8 py-10 md:py-16">
+    <a
+      href="/"
+      class="inline-flex items-center gap-1 text-sm text-tx3 hover:text-tx1 transition-colors mb-8 no-underline"
+    >
+      ← 返回首页
+    </a>
+
+    <h1 class="font-serif-display text-4xl md:text-5xl text-tx1 mb-3 leading-tight">
+      如何收听播客
+    </h1>
+    <p class="text-tx3 mb-10">选择你喜欢的方式，随时随地收听 {podcastConfig.podcast.name}</p>
+
+    <div class="space-y-10">
+      <!-- RSS 订阅 -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">
+          推荐：使用 RSS 订阅
+        </h2>
+        <div class="p-4 rounded-lg bg-sf-card border border-bd mb-5">
+          <div class="flex items-center gap-2 mb-3">
+            <IconLucideRss class="w-4 h-4 text-ac" />
+            <span class="font-mono-label text-xs tracking-widest text-ac uppercase font-medium">
+              开放标准
+            </span>
+          </div>
+          <p class="text-sm text-tx2 leading-[1.8] mb-3">
+            RSS 是一种开放的订阅标准，不受任何平台控制。使用 RSS 客户端订阅，你可以完全掌控自己的收听体验，不会被算法推荐干扰。
+          </p>
+          <div class="flex items-center gap-2">
+            <code id="rss-url-page" class="flex-1 text-xs bg-pg border border-bd rounded px-3 py-2 text-tx2 font-mono">
+              {rssUrl}
+            </code>
+            <button
+              id="copy-rss-page"
+              class="px-4 py-2 text-sm  min-w-20 font-medium text-white bg-ac hover:bg-ac-h rounded transition-colors"
+            >
+              拷贝
+            </button>
+
+
+          </div>
+        </div>
+
+        <div class="text-base text-tx2 leading-[1.85] space-y-4">
+          <p class="font-medium text-tx1">推荐的 RSS 客户端：</p>
+          <ul class="space-y-2 ml-4">
+            <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+              <span class="text-tx1 font-medium">iOS/macOS：</span>Castro、Overcast、Pocket Casts
+            </li>
+            <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+              <span class="text-tx1 font-medium">Android：</span>Pocket Casts、AntennaPod、Podcast Addict
+            </li>
+            <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+              <span class="text-tx1 font-medium">跨平台：</span>Pocket Casts、Spotify（支持 RSS）
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="border-t border-bd"></div>
+
+      <!-- 在线收听 -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">
+          在线收听
+        </h2>
+        <div class="text-base text-tx2 leading-[1.85] space-y-4">
+          <p>
+            你也可以直接在本网站收听所有节目。访问 <a href="/" class="text-ac hover:underline">首页</a>，点击任意一期节目即可开始播放。
+          </p>
+          <p>
+            网站播放器支持进度记忆、倍速播放等功能，并且在切换页面时会保持播放状态。
+          </p>
+        </div>
+      </section>
+
+      <div class="border-t border-bd"></div>
+
+      <!-- 播客平台 -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">
+          主流播客平台
+        </h2>
+        <div class="text-base text-tx2 leading-[1.85] space-y-4">
+          <p>
+            我们正在将播客提交到各大平台，敬请期待：
+          </p>
+            <PlatformLinks layout="grid" />
+        </div>
+      </section>
+
+      <div class="border-t border-bd"></div>
+
+      <!-- 为什么推荐泛用型客户端 -->
+      <section>
+        <!-- <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">
+          为什么推荐使用泛用型客户端
+        </h2> -->
+        <div class="p-4 rounded-lg bg-sf-card border border-bd mb-5">
+          <div class="flex items-center gap-2 mb-3">
+            <IconLucideInfo class="w-4 h-4 text-ac" />
+            <span class="font-mono-label text-xs tracking-widest text-ac uppercase font-medium">
+              重要提示
+            </span>
+          </div>
+          <div class="text-sm text-tx2 leading-[1.8] space-y-3">
+            <p>
+              我们强烈建议使用支持 RSS 的泛用型播客客户端，而不是依赖单一平台的应用。
+            </p>
+            <ul class="space-y-2 ml-4">
+              <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+                <span class="text-tx1 font-medium">掌控权：</span>你的订阅列表完全由自己管理，不受平台算法干扰
+              </li>
+              <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+                <span class="text-tx1 font-medium">隐私：</span>RSS 订阅不需要账号，不会追踪你的收听习惯
+              </li>
+              <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+                <span class="text-tx1 font-medium">自由：</span>可以随时切换客户端，订阅数据永远属于你
+              </li>
+              <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+                <span class="text-tx1 font-medium">开放标准：</span>RSS 是开放协议，不会因为某个平台关闭而失去内容
+              </li>
+              <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+                <span class="text-tx1 font-medium">即时更新：</span>新节目发布后，RSS 客户端会立即获取，无需等待平台审核
+              </li>
+            </ul>
+            <p class="pt-2 text-tx3 text-sm">
+              虽然 Spotify、小宇宙等平台更方便，但它们本质上是"围墙花园"。使用支持 RSS 订阅的泛用型客户端，你才是真正的播客订阅者，而不是平台的用户。
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="mt-16 pt-6 border-t border-bd text-center text-xs text-tx4">
+      有问题？<a href="/about" class="text-ac hover:underline">联系我们</a>
+    </div>
+  </div>
+
+  <script>
+    function initCopyButton() {
+      const copyBtn = document.getElementById('copy-rss-page');
+      const rssUrlEl = document.getElementById('rss-url-page');
+
+      copyBtn?.addEventListener('click', async () => {
+        const rssUrl = rssUrlEl?.textContent?.trim() || '';
+        try {
+          await navigator.clipboard.writeText(rssUrl);
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = '已拷贝';
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+          }, 2000);
+        } catch (err) {
+          console.error('Failed to copy:', err);
+        }
+      });
+    }
+
+    initCopyButton();
+    document.addEventListener('astro:after-swap', initCopyButton);
+  </script>
+</Layout>

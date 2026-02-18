@@ -1,0 +1,102 @@
+---
+import { podcastConfig } from '@hn/config'
+
+const rssUrl = podcastConfig.platforms.find(i=>i.isRss)?.url ? podcastConfig.platforms.find(i=>i.isRss)?.url : `${podcastConfig.site.url}/rss.xml`
+
+---
+
+<div id="rss-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="relative w-full max-w-md mx-4 bg-sf-card border border-bd rounded-lg shadow-xl">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 id="modal-title" class="text-lg font-semibold text-tx1">订阅 RSS</h3>
+        <button id="close-modal" class="text-tx4 hover:text-tx1 transition-colors" aria-label="关闭对话框">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <p class="text-sm text-tx3 mb-4">
+        拷贝下方链接，在你喜欢的播客应用中添加订阅：
+      </p>
+
+      <div class="flex items-center gap-2 mb-6">
+        <input
+          type="text"
+          readonly
+          value={rssUrl}
+          id="rss-url"
+          class="flex-1 px-3 py-2 text-sm bg-pg border border-bd rounded text-tx2 font-mono"
+          aria-label="RSS 订阅链接"
+        />
+        <button
+          id="copy-rss"
+          class="px-4 py-2 text-sm  min-w-20 font-medium text-white bg-ac hover:bg-ac-h rounded transition-colors"
+          aria-label="拷贝 RSS 链接"
+        >
+          拷贝
+        </button>
+      </div>
+
+      <div class="space-y-2">
+        <p class="text-xs text-tx4 uppercase tracking-wider font-mono-label">推荐应用</p>
+        <div class="grid grid-cols-2 gap-2 text-sm" role="list">
+          <div class="text-tx3" role="listitem">• Apple Podcasts</div>
+          <div class="text-tx3" role="listitem">• Overcast</div>
+          <div class="text-tx3" role="listitem">• Pocket Casts</div>
+          <div class="text-tx3" role="listitem">• Castro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initRssModal() {
+    const modal = document.getElementById('rss-modal')
+    const closeBtn = document.getElementById('close-modal')
+    const copyBtn = document.getElementById('copy-rss')
+    const rssUrl = document.getElementById('rss-url') as HTMLInputElement
+
+    if (!modal || !closeBtn || !copyBtn || !rssUrl) return
+
+    // Close modal
+    const closeModal = () => {
+      modal.classList.add('hidden')
+      modal.classList.remove('flex')
+    }
+
+    closeBtn.addEventListener('click', closeModal)
+
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal()
+    })
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+        closeModal()
+      }
+    })
+
+    // Copy RSS URL
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(rssUrl.value)
+        const originalText = copyBtn.textContent
+        copyBtn.textContent = '已拷贝'
+        setTimeout(() => {
+          copyBtn.textContent = originalText
+        }, 2000)
+      } catch (err) {
+        console.error('Failed to copy:', err)
+      }
+    })
+  }
+
+  // Initialize on page load and after View Transitions
+  initRssModal()
+  document.addEventListener('astro:after-swap', initRssModal)
+</script>

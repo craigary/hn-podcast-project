@@ -1,0 +1,81 @@
+---
+import { podcastConfig } from '@hn/config'
+
+export interface Props {
+  title?: string
+  description?: string
+  image?: string
+  type?: 'website' | 'article'
+  publishedTime?: string
+  author?: string
+  canonical?: string
+}
+
+const {
+  title = podcastConfig.podcast.name,
+  description,
+  image,
+  type = 'website',
+  publishedTime,
+  author,
+  canonical
+} = Astro.props
+
+// 构建完整的 URL
+const siteUrl = podcastConfig.site.url
+const currentUrl = canonical || new URL(Astro.url.pathname, siteUrl).href
+
+// 默认描述和 OG 图片
+const defaultDescription = `每日精选 Hacker News 热门话题，由 AI 主播深度解读科技新闻。`
+const finalDescription = description || defaultDescription
+const defaultOgImage = `${siteUrl}/og-image.png`
+const ogImage = image || defaultOgImage
+
+// 完整标题
+const fullTitle = title === podcastConfig.podcast.name ? title : `${title} — ${podcastConfig.podcast.name}`
+---
+
+<!-- Primary Meta Tags -->
+<title>{fullTitle}</title>
+<meta name="title" content={fullTitle} />
+<meta name="description" content={finalDescription} />
+<link rel="canonical" href={currentUrl} />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content={type} />
+<meta property="og:url" content={currentUrl} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={finalDescription} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:site_name" content={podcastConfig.podcast.name} />
+<meta property="og:locale" content="zh_CN" />
+
+{type === 'article' && publishedTime && (
+  <meta property="article:published_time" content={publishedTime} />
+)}
+{author && (
+  <meta property="article:author" content={author} />
+)}
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={currentUrl} />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={finalDescription} />
+<meta name="twitter:image" content={ogImage} />
+{podcastConfig.social?.twitter && (
+  <meta name="twitter:site" content={`@${podcastConfig.social.twitter.replace('https://twitter.com/', '').replace('https://x.com/', '')}`} />
+)}
+
+<!-- Additional SEO -->
+<meta name="robots" content="index, follow" />
+<meta name="googlebot" content="index, follow" />
+<meta name="language" content="Chinese" />
+<meta name="author" content={podcastConfig.podcast.name} />
+
+<!-- RSS Feed -->
+<link rel="alternate" type="application/rss+xml" title={`${podcastConfig.podcast.name} RSS Feed`} href={`${siteUrl}/rss.xml`} />
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" type="image/x-icon" href="/favicon.ico" />

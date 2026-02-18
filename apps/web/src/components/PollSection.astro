@@ -1,0 +1,34 @@
+---
+interface Props {
+  options: { label: string; votes: number }[]
+}
+const { options } = Astro.props
+const totalVotes = options.reduce((s, o) => s + o.votes, 0)
+---
+
+<section aria-labelledby="poll-heading">
+  <h2 id="poll-heading" class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-2">话题投票</h2>
+  <p class="text-xs text-tx4 mb-3">下一期你最想听什么？</p>
+  <div class="space-y-2 mb-3" role="group" aria-label="投票选项">
+    {
+      options.map(opt => {
+        const pct = Math.round((opt.votes / totalVotes) * 100)
+        return (
+          <button
+            class="w-full text-left relative rounded-md overflow-hidden border border-bd hover:border-tx4 transition-colors group"
+            aria-label={`${opt.label}，当前 ${pct}% 的票数`}
+          >
+            <div class="absolute inset-0 bg-ac/8 transition-all" style={`width: ${pct}%`} aria-hidden="true" />
+            <div class="relative flex items-center justify-between px-3 py-2">
+              <span class="text-xs text-tx2 group-hover:text-tx1 transition-colors">
+                {opt.label}
+              </span>
+              <span class="text-xs font-mono-label text-tx4 shrink-0 ml-2" aria-hidden="true">{pct}%</span>
+            </div>
+          </button>
+        )
+      })
+    }
+  </div>
+  <p class="text-xs text-tx4" aria-live="polite">已有 {totalVotes} 人投票</p>
+</section>

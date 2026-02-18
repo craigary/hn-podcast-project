@@ -1,0 +1,21 @@
+---
+interface Props {
+  links: { title: string; url: string }[]
+  episodeId?: number
+}
+const { links, episodeId } = Astro.props
+---
+
+<section>
+  <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">本期讨论</h2>
+  {episodeId && <p class="text-xs text-tx4 mb-3">EP{episodeId} 讨论话题</p>}
+  <div class="divide-y divide-bd">
+    {
+      links.map(link => (
+        <a href={link.url} target="_blank" rel="noopener noreferrer" class="block py-2.5 text-sm text-tx3 leading-snug hover:text-ac transition-colors no-underline line-clamp-2">
+          {link.title}
+        </a>
+      ))
+    }
+  </div>
+</section>

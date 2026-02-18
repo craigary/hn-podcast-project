@@ -1,0 +1,71 @@
+---
+import { Image } from 'astro:assets'
+
+interface Props {
+  slug: string
+  epId: number
+  date: string
+  title: string
+  desc: string
+  coverImage?: string
+}
+const { slug, epId, date, title, desc, coverImage } = Astro.props
+---
+
+<a href={`/${slug}`} class="block py-5 px-3 group cursor-pointer no-underline relative overflow-hidden transition-all" aria-label={`单集 ${epId}: ${title}`}>
+  {
+    coverImage && (
+      <div class="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300" aria-hidden="true">
+        <Image
+          src={coverImage}
+          alt=""
+          width={200}
+          height={200}
+          loading="lazy"
+          class="w-full h-full object-cover blur-sm scale-110"
+        />
+      </div>
+    )
+  }
+  <div class="relative">
+    <!-- Mobile: 日期和期数水平排列 -->
+    <div class="flex items-center gap-3 mb-3 md:hidden">
+      <time class="font-mono-label text-xs text-tx4 tracking-wide" datetime={date}>
+        {date}
+      </time>
+      <span class="font-mono-label text-xs text-tx4/60 tracking-wider uppercase">
+        EP{epId}
+      </span>
+    </div>
+
+    <!-- Desktop: 原有布局 -->
+    <div class="hidden md:flex gap-4 md:gap-6 items-baseline">
+      <div class="shrink-0 w-25 md:w-27.5 pt-1">
+        <time class="font-mono-label text-xs text-tx4 tracking-wide block" datetime={date}>
+          {date}
+        </time>
+        <span class="font-mono-label text-xs text-tx4/60 tracking-wider uppercase block mt-1">
+          EP{epId}
+        </span>
+      </div>
+      <div class="min-w-0">
+        <h3
+          class="font-serif-display text-xl md:text-2xl text-tx1 group-hover:text-ac transition-colors leading-snug mb-1.5"
+        >
+          {title}
+        </h3>
+        <p class="text-sm text-tx3/80 leading-relaxed line-clamp-2">{desc}</p>
+      </div>
+    </div>
+
+    <!-- Mobile: 标题和描述 -->
+    <div class="md:hidden">
+      <h3
+        class="font-serif-display text-xl text-tx1 group-hover:text-ac transition-colors leading-snug mb-1.5"
+      >
+        {title}
+      </h3>
+      <p class="text-sm text-tx3/80 leading-relaxed line-clamp-2">{desc}</p>
+    </div>
+  </div>
+</a>

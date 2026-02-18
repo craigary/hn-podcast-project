@@ -1,0 +1,265 @@
+---
+import Layout from '../layouts/Layout.astro'
+import IconLucideZap from '~icons/lucide/zap'
+import { podcastConfig } from '@hn/config'
+
+const description = `了解 ${podcastConfig.podcast.name} 如何使用 AI 技术生成播客内容，包括语音合成、内容生成和质量控制。`
+---
+
+<Layout
+  title="AI 技术说明"
+  description={description}
+  type="website"
+>
+  <div class="max-w-175 mx-auto px-5 md:px-8 py-10 md:py-16">
+    <a
+      href="/"
+      class="inline-flex items-center gap-1 text-sm text-tx3 hover:text-tx1 transition-colors mb-8 no-underline"
+    >
+      ← 返回首页
+    </a>
+
+    <h1 class="font-serif-display text-4xl md:text-5xl text-tx1 mb-3 leading-tight">
+      AI 技术说明
+    </h1>
+    <p class="text-tx3 mb-10">了解 {podcastConfig.podcast.name} 背后的 AI 技术栈</p>
+
+    <div class="space-y-10">
+      <!-- 透明声明 -->
+      <section>
+        <div class="p-4 rounded-lg bg-sf-card border border-bd mb-5">
+          <div class="flex items-center gap-2 mb-3">
+            <IconLucideZap class="w-4 h-4 text-ac" />
+            <span class="font-mono-label text-xs tracking-widest text-ac uppercase font-medium">
+              透明声明
+            </span>
+          </div>
+          <p class="text-sm text-tx2 leading-[1.8]">
+            本播客的所有内容均由 AI 生成，包括话题筛选、对话脚本编写、语音合成，以及 Show Notes 的整理。我们相信 AI 生成内容应该被透明地标注，因此在每一期节目和本网站的各个位置都有明确说明。
+          </p>
+        </div>
+      </section>
+
+      <!-- 技术栈 -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">
+          完整技术栈
+        </h2>
+        <div class="space-y-6">
+          <!-- 话题筛选 -->
+          <div class="border-l-2 border-ac/30 pl-4">
+            <h3 class="text-tx1 font-medium text-base mb-2">1. 话题筛选</h3>
+            <div class="text-sm text-tx3 leading-[1.8] space-y-2">
+              <p>
+                <span class="text-tx1 font-medium">数据源：</span>通过 Hacker News API 获取首页新闻和评论
+              </p>
+              <p>
+                <span class="text-tx1 font-medium">AI 模型：</span>longCat-Flash-Chat
+              </p>
+              <p>
+                <span class="text-tx1 font-medium">筛选标准：</span>评估新闻价值、讨论深度、技术相关性和话题多样性
+              </p>
+              <p>
+                <span class="text-tx1 font-medium">输出：</span>每日精选 6-8 条最值得讨论的新闻
+              </p>
+            </div>
+          </div>
+
+          <!-- 对话生成 -->
+          <div class="border-l-2 border-ac/30 pl-4">
+            <h3 class="text-tx1 font-medium text-base mb-2">2. 对话脚本生成</h3>
+            <div class="text-sm text-tx3 leading-[1.8] space-y-2">
+              <p>
+                <span class="text-tx1 font-medium">AI 模型：</span>mistral-large-latest
+              </p>
+              <!-- <p>
+                <span class="text-tx1 font-medium">主播人设：</span>
+              </p>
+              <ul class="ml-4 space-y-1">
+                <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+                  <span class="text-tx1 font-medium">{podcastConfig.hosts.female.name}：</span>{podcastConfig.hosts.female.personality}
+                </li>
+                <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+                  <span class="text-tx1 font-medium">{podcastConfig.hosts.male.name}：</span>{podcastConfig.hosts.male.personality}
+                </li>
+              </ul> -->
+              <p>
+                <span class="text-tx1 font-medium">对话风格：</span>自然、口语化，带有适度的幽默和批判性思考
+              </p>
+              <p>
+                <span class="text-tx1 font-medium">内容来源：</span>新闻原文 + HN 评论区精华讨论
+              </p>
+            </div>
+          </div>
+
+          <!-- 语音合成 -->
+          <div class="border-l-2 border-ac/30 pl-4">
+            <h3 class="text-tx1 font-medium text-base mb-2">3. 语音合成</h3>
+            <div class="text-sm text-tx3 leading-[1.8] space-y-2">
+              <p>
+                <span class="text-tx1 font-medium">TTS 引擎：</span>Azure Text-to-Speech
+              </p>
+              <p>
+                <span class="text-tx1 font-medium">语音模型：</span>
+              </p>
+              <ul class="ml-4 space-y-1">
+                <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+                  <span class="text-tx1 font-medium">{podcastConfig.hosts.female.name}：</span>{podcastConfig.hosts.female.voice}
+                </li>
+                <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+                  <span class="text-tx1 font-medium">{podcastConfig.hosts.male.name}：</span>{podcastConfig.hosts.male.voice}
+                </li>
+              </ul>
+              <p>
+                <span class="text-tx1 font-medium">音频处理：</span>自动添加背景音乐、淡入淡出效果和对话间隔
+              </p>
+              <p>
+                <span class="text-tx1 font-medium">输出格式：</span>MP3，比特率 128kbps
+              </p>
+            </div>
+          </div>
+
+          <!-- Show Notes -->
+          <div class="border-l-2 border-ac/30 pl-4">
+            <h3 class="text-tx1 font-medium text-base mb-2">4. Show Notes 生成</h3>
+            <div class="text-sm text-tx3 leading-[1.8] space-y-2">
+              <p>
+                <span class="text-tx1 font-medium">AI 模型：</span>{podcastConfig.ai.defaultModel}
+              </p>
+              <p>
+                <span class="text-tx1 font-medium">内容：</span>自动提取新闻标题、链接、HN 讨论链接和简短描述
+              </p>
+              <p>
+                <span class="text-tx1 font-medium">格式：</span>结构化 Markdown，便于网站展示
+              </p>
+            </div>
+          </div>
+
+          <!-- 网站与托管 -->
+          <div class="border-l-2 border-ac/30 pl-4">
+            <h3 class="text-tx1 font-medium text-base mb-2">5. 网站与托管</h3>
+            <div class="text-sm text-tx3 leading-[1.8] space-y-2">
+              <p>
+                <span class="text-tx1 font-medium">前端框架：</span>Astro + Tailwind CSS
+              </p>
+              <p>
+                <span class="text-tx1 font-medium">音频存储：</span>Cloudflare R2
+              </p>
+              <p>
+                <span class="text-tx1 font-medium">网站托管：</span>Cloudflare Worker
+              </p>
+              <p>
+                <span class="text-tx1 font-medium">RSS Feed：</span>标准 Podcast RSS 2.0 格式，支持 iTunes 标签
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="border-t border-bd"></div>
+
+      <!-- 工作流程 -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">
+          自动化工作流程
+        </h2>
+        <div class="text-base text-tx2 leading-[1.85] space-y-4">
+          <p>整个播客制作流程完全自动化，每日执行：</p>
+          <ol class="space-y-3 ml-4">
+            <li class="relative pl-6 before:absolute before:left-0 before:top-0 before:content-['1.'] before:text-ac before:font-medium">
+              <span class="text-tx1 font-medium">抓取数据：</span>从 HN API 获取当日首页新闻和热门评论
+            </li>
+            <li class="relative pl-6 before:absolute before:left-0 before:top-0 before:content-['2.'] before:text-ac before:font-medium">
+              <span class="text-tx1 font-medium">AI 筛选：</span>评估新闻价值，选出 6-8 条最值得讨论的话题
+            </li>
+            <li class="relative pl-6 before:absolute before:left-0 before:top-0 before:content-['3.'] before:text-ac before:font-medium">
+              <span class="text-tx1 font-medium">生成蓝图：</span>根据新闻内容和评论，生成两位主播的对话蓝图，包含主要观点和讨论结构
+            </li>
+            <li class="relative pl-6 before:absolute before:left-0 before:top-0 before:content-['3.'] before:text-ac before:font-medium">
+              <span class="text-tx1 font-medium">生成脚本：</span>根据新闻内容和评论，生成两位主播的对话脚本
+            </li>
+            <li class="relative pl-6 before:absolute before:left-0 before:top-0 before:content-['4.'] before:text-ac before:font-medium">
+              <span class="text-tx1 font-medium">语音合成：</span>将脚本转换为自然语音，添加音效和背景音乐
+            </li>
+            <li class="relative pl-6 before:absolute before:left-0 before:top-0 before:content-['5.'] before:text-ac before:font-medium">
+              <span class="text-tx1 font-medium">生成 Show Notes：</span>提取关键信息，生成结构化的节目笔记
+            </li>
+            <li class="relative pl-6 before:absolute before:left-0 before:top-0 before:content-['6.'] before:text-ac before:font-medium">
+              <span class="text-tx1 font-medium">发布上线：</span>上传音频到 R2，更新网站内容，推送 RSS Feed
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <div class="border-t border-bd"></div>
+
+      <!-- 质量控制 -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">
+          质量控制
+        </h2>
+        <div class="text-base text-tx2 leading-[1.85] space-y-4">
+          <p>虽然内容由 AI 生成，但我们仍然注重质量：</p>
+          <ul class="space-y-2 ml-4">
+            <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+              <span class="text-tx1 font-medium">事实核查：</span>AI 生成的内容基于真实新闻和评论，不会编造事实
+            </li>
+            <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+              <span class="text-tx1 font-medium">多样性：</span>确保每期节目涵盖不同类型的技术话题
+            </li>
+            <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+              <span class="text-tx1 font-medium">可读性：</span>对话脚本经过优化，确保自然流畅
+            </li>
+            <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40">
+              <span class="text-tx1 font-medium">音频质量：</span>语音合成使用高质量模型，音效处理专业
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="border-t border-bd"></div>
+
+      <!-- 局限性 -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">
+          已知局限性
+        </h2>
+        <div class="text-base text-tx2 leading-[1.85] space-y-4">
+          <p>作为 AI 生成的播客，我们也有一些局限：</p>
+          <ul class="space-y-2 ml-4">
+            <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-tx4">
+              <span class="text-tx1 font-medium">缺乏真实情感：</span>虽然对话自然，但缺少人类主播的真实情感和临场反应
+            </li>
+            <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-tx4">
+              <span class="text-tx1 font-medium">深度有限：</span>AI 的理解深度可能不如资深技术专家
+            </li>
+            <li class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-tx4">
+              <span class="text-tx1 font-medium">语音合成：</span>虽然接近真人，但仍可能有轻微的机械感
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="border-t border-bd"></div>
+
+      <!-- 开源 -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">
+          开源与透明
+        </h2>
+        <div class="text-base text-tx2 leading-[1.85] space-y-4">
+          <p>
+            我们计划将播客生成的核心代码开源，让更多人了解 AI 播客的制作流程。如果你对技术细节感兴趣，欢迎关注我们的 <a href={podcastConfig.social.github} class="text-ac hover:underline">GitHub 仓库</a>。
+          </p>
+          <p>
+            如果你发现内容错误或有任何建议，欢迎通过 <a href="/about" class="text-ac hover:underline">关于页面</a> 联系我们。
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <div class="mt-16 pt-6 border-t border-bd text-center text-xs text-tx4">
+      <a href="/about" class="text-ac hover:underline">返回关于页面</a>
+    </div>
+  </div>
+</Layout>

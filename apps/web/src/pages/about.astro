@@ -1,0 +1,165 @@
+---
+import Layout from '../layouts/Layout.astro'
+import PlatformLinks from '../components/PlatformLinks.astro'
+import IconLucideZap from '~icons/lucide/zap'
+import IconSimpleIconsX from '~icons/simple-icons/x'
+import IconSimpleIconsGithub from '~icons/simple-icons/github'
+import { podcastConfig } from '@hn/config'
+
+const description = `了解 ${podcastConfig.podcast.name} 的创作理念、团队成员和联系方式。`
+---
+
+<Layout
+  title="关于"
+  description={description}
+  type="website"
+>
+  <div class="max-w-175 mx-auto px-5 md:px-8 py-10 md:py-16">
+    <a
+      href="/"
+      class="inline-flex items-center gap-1 text-sm text-tx3 hover:text-tx1 transition-colors mb-8 no-underline"
+    >
+      ← 返回首页
+    </a>
+
+    <h1 class="font-serif-display text-4xl md:text-5xl text-tx1 mb-3 leading-tight">
+      关于 {podcastConfig.podcast.name}
+    </h1>
+    <p class="text-tx3 mb-10">一档由 AI 驱动的 Hacker News 每日深度对谈播客</p>
+
+    <div class="space-y-10">
+      <!-- What -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">这是什么</h2>
+        <div class="text-base text-tx2 leading-[1.85] space-y-4">
+          <p>
+            {podcastConfig.podcast.name} 是一档每日更新的中文技术播客。每天，我们从 Hacker News 首页精选 6-8
+            条最值得关注的新闻和讨论，由两位 AI 主播——陈默和林跃——展开深度对谈。
+          </p>
+          <p>
+            陈默擅长技术深度分析，从系统架构和工程实践的角度拆解话题；林跃则从产品和商业视角出发，追问技术趋势对普通人的意义。两种视角的碰撞，构成了每一期节目的核心张力。
+          </p>
+        </div>
+      </section>
+
+      <div class="border-t border-bd"></div>
+
+      <!-- AI -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">
+          关于 AI 生成
+        </h2>
+        <div class="p-4 rounded-lg bg-sf-card border border-bd mb-5">
+          <div class="flex items-center gap-2 mb-3">
+            <IconLucideZap class="w-4 h-4 text-ac" />
+            <span class="font-mono-label text-xs tracking-widest text-ac uppercase font-medium"
+              >透明声明</span
+            >
+          </div>
+          <p class="text-sm text-tx2 leading-[1.8]">
+            本播客的所有内容均由 AI 生成，这包括：话题筛选、对话脚本编写、语音合成，以及 Show Notes
+            的整理。我们相信 AI
+            生成内容应该被透明地标注，因此在每一期节目和本网站的各个位置都有明确说明。
+          </p>
+        </div>
+        <div class="text-base text-tx2 leading-[1.85] space-y-4">
+          <p>我们的技术栈如下：</p>
+          <ul class="space-y-2 ml-4">
+            <li
+              class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40"
+            >
+              <span class="text-tx1 font-medium">话题筛选：</span>通过 HN API
+              获取首页新闻，由大语言模型评估新闻价值和讨论深度
+            </li>
+            <li
+              class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40"
+            >
+              <span class="text-tx1 font-medium">对话生成：</span
+              >大语言模型根据新闻内容和评论区讨论，生成两位主播的对话脚本
+            </li>
+            <li
+              class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40"
+            >
+              <span class="text-tx1 font-medium">语音合成：</span>使用 TTS 模型将文本转化为自然语音
+            </li>
+            <li
+              class="relative pl-4 before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:rounded-full before:bg-ac/40"
+            >
+              <span class="text-tx1 font-medium">网站与托管：</span>Astro + Tailwind CSS
+              构建，音频存储于 Cloudflare R2
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="border-t border-bd"></div>
+
+      <!-- Hosts -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">AI 主播</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="p-4 rounded-lg border border-bd">
+            <div class="font-serif-display text-xl text-tx1 mb-1">{podcastConfig.hosts.female.name}</div>
+            <div class="font-mono-label text-xs text-ac tracking-wider uppercase mb-3">
+              {podcastConfig.hosts.female.role}
+            </div>
+            <!-- <p class="text-sm text-tx3 leading-relaxed">
+              {podcastConfig.hosts.female.personality}
+            </p> -->
+          </div>
+          <div class="p-4 rounded-lg border border-bd">
+            <div class="font-serif-display text-xl text-tx1 mb-1">{podcastConfig.hosts.male.name}</div>
+            <div class="font-mono-label text-xs text-ac tracking-wider uppercase mb-3">
+              {podcastConfig.hosts.male.role}
+            </div>
+            <!-- <p class="text-sm text-tx3 leading-relaxed">
+              {podcastConfig.hosts.male.personality}
+            </p> -->
+          </div>
+        </div>
+      </section>
+
+      <div class="border-t border-bd"></div>
+
+      <!-- Subscribe -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">收听方式</h2>
+        <PlatformLinks layout="grid" />
+      </section>
+
+      <div class="border-t border-bd"></div>
+
+      <!-- Contact -->
+      <section>
+        <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">联系我们</h2>
+        <p class="text-base text-tx2 leading-[1.85]">
+          如果你有任何建议、反馈，或者发现了内容错误，欢迎通过以下方式联系：
+        </p>
+        <div class="flex gap-4 mt-4">
+          <a
+            href={podcastConfig.social.twitter}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-2 text-sm text-tx3 hover:text-tx1 transition-colors no-underline"
+          >
+            <IconSimpleIconsX class="w-4 h-4" />
+            Twitter / X
+          </a>
+          <a
+            href={podcastConfig.social.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-2 text-sm text-tx3 hover:text-tx1 transition-colors no-underline"
+          >
+            <IconSimpleIconsGithub class="w-4 h-4" />
+            GitHub
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <div class="mt-16 pt-6 border-t border-bd text-center text-xs text-tx4">
+      {podcastConfig.podcast.name} © 2026 · 每日更新 · AI 生成内容
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,21 @@
+---
+import IconSimpleIconsX from '~icons/simple-icons/x'
+import IconSimpleIconsGithub from '~icons/simple-icons/github'
+import IconSimpleIconsYoutube from '~icons/simple-icons/youtube'
+import { podcastConfig } from '@hn/config'
+---
+
+<div class="flex gap-4">
+  <!-- X / Twitter -->
+  <a href={podcastConfig.social.twitter} target="_blank" rel="noopener noreferrer" class="text-tx4 hover:text-tx1 transition-colors" aria-label="Twitter/X">
+    <IconSimpleIconsX class="w-4 h-4" />
+  </a>
+  <!-- GitHub -->
+  <a href={podcastConfig.social.github} target="_blank" rel="noopener noreferrer" class="text-tx4 hover:text-tx1 transition-colors" aria-label="GitHub">
+    <IconSimpleIconsGithub class="w-4 h-4" />
+  </a>
+  <!-- YouTube -->
+  <!-- <a href={podcastConfig.social.youtube} target="_blank" rel="noopener noreferrer" class="text-tx4 hover:text-tx1 transition-colors" aria-label="YouTube">
+    <IconSimpleIconsYoutube class="w-4 h-4" />
+  </a> -->
+</div>

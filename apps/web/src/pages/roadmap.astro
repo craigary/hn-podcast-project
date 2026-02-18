@@ -1,0 +1,78 @@
+---
+import Layout from '../layouts/Layout.astro'
+import { marked } from 'marked'
+import { podcastConfig } from '@hn/config'
+
+marked.setOptions({ breaks: true })
+
+const description = `查看 ${podcastConfig.podcast.name} 的更新日志和未来规划，了解我们的产品迭代历程。`
+
+export const entries = [
+  {
+    date: '2月18日, 2026',
+    title: 'HN 瞎聊正式上线！',
+    desc: '经过数天的开发和测试，HN 瞎聊正式上线！欢迎大家收听并挑错。',
+    tag: '里程碑',
+    tagClass: 'bg-purple-500/15 text-purple-500',
+    active: true
+  },
+  {
+    date: '2月7日, 2026',
+    title: '项目启动',
+    desc: '开始规划一档由 AI 驱动的 Hacker News 每日播客。目标：让技术新闻更容易消化，同时保持深度和趣味性。',
+    tag: '里程碑',
+    tagClass: 'bg-ac/15 text-ac'
+  }
+]
+---
+
+<Layout
+  title="更新日志"
+  description={description}
+  type="website"
+>
+  <main class="max-w-175 mx-auto px-5 py-12 md:py-16 pb-16">
+    <h1 class="font-serif-display text-4xl md:text-5xl text-tx1 mb-3">路线图</h1>
+    <p class="text-tx3 mb-12 md:mb-16">记录 {podcastConfig.podcast.name} 从构想到成长的每一步。</p>
+
+    <div class="relative">
+      <div class="absolute left-1.25 top-2 bottom-0 w-px bg-bd"></div>
+
+      <div class="flex flex-col gap-10">
+        {
+          entries.map((entry, i) => (
+            <div class="relative pl-10">
+              <div
+                class:list={[
+                  'absolute left-0 top-1.5 w-2.75 h-2.75 rounded-full border-2 border-pg',
+                  i === 0 ? 'bg-ac' : 'bg-tx4'
+                ]}
+              />
+
+              <span class="font-mono-label text-xs text-tx4 tracking-wide">{entry.date}</span>
+              <div class="flex items-center gap-2.5 mt-1.5 mb-1.5">
+                <h2 class="text-tx1 font-medium">{entry.title}</h2>
+                <span
+                  class:list={[
+                    'text-xs font-mono-label px-2 py-0.5 rounded-full leading-none whitespace-nowrap',
+                    entry.tagClass
+                  ]}
+                >
+                  {entry.tag}
+                </span>
+              </div>
+              <div class="text-sm text-tx3 leading-relaxed [&_a]:text-ac [&_a]:underline" set:html={marked.parse(entry.desc)} />
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="mt-16 pt-8 border-t border-bd">
+      <h3 class="text-tx1 font-medium mb-2">有建议？</h3>
+      <p class="text-sm text-tx4 leading-relaxed">
+        如果你对播客有任何建议或反馈，欢迎通过 Twitter 或 GitHub 联系我们。
+      </p>
+    </div>
+  </main>
+</Layout>

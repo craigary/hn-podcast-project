@@ -1,0 +1,78 @@
+name: 生成播客剧集
+
+on:
+  schedule:
+    # 每天 UTC 08:00 运行（即 PST 00:00 / 北京时间 16:00）
+    # 此时 PST 前一天已完全结束，确保昨天的 HN 故事数据充足
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: '期数（留空则自动从 KV 获取）'
+        required: false
+        type: string
+      date:
+        description: '日期 YYYY-MM-DD（留空则自动使用昨天）'
+        required: false
+        type: string
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 签出代码
+        uses: actions/checkout@v6
+
+      - name: 安装 Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 安装依赖
+        run: bun install
+
+      - name: 安装 FFmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v3
+
+      - name: 生成播客剧集
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.episode }}" ]; then
+            ARGS="$ARGS --episode ${{ inputs.episode }}"
+          fi
+          if [ -n "${{ inputs.date }}" ]; then
+            ARGS="$ARGS --date ${{ inputs.date }}"
+          fi
+          bun run gen $ARGS
+        env:
+          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LONGCAT_API_KEY: ${{ secrets.LONGCAT_API_KEY }}
+          POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          CF_R2_BUCKET: ${{ secrets.CF_R2_BUCKET }}
+          CF_R2_PUBLIC_URL: ${{ secrets.CF_R2_PUBLIC_URL }}
+          CF_KV_NAMESPACE_ID: ${{ secrets.CF_KV_NAMESPACE_ID }}
+
+      - name: 提交并推送新剧集
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/web/src/content/episodes/
+          # 仅在有新文件时提交
+          if git diff --cached --quiet; then
+            echo "没有新剧集生成，跳过提交"
+          else
+            EPISODE_FILE=$(git diff --cached --name-only | head -1)
+            git commit -m "🎙️ 自动生成新播客剧集: ${EPISODE_FILE}
+
+          Co-authored-by: Craig Hart <i@craigary.net>"
+            git push
+          fi
