@@ -7,7 +7,7 @@ import { podcastConfig } from '@hn/config'
 
 // https://astro.build/config
 export default defineConfig({
-//  output: 'server',
+  output: 'static',
   adapter: cloudflare(),
   site: podcastConfig.site.url,
   image: {
