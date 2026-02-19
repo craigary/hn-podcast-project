@@ -82,13 +82,13 @@ function buildFrontmatter(
   const frontmatter = `---
 id: ${episodeNumber}
 date: '${metadata.date}'
-title: '${metadata.title.replace(/'/g, "''")}'
-desc: '${metadata.description.replace(/'/g, "''")}'
+title: '${metadata.title.replace(/['\']/g, "''")}'
+desc: '${metadata.description.replace(/['\']/g, "''")}'
 audioUrl: '${audioUrl}'
 ${coverImageLine}showNotes:
 ${showNotes
   .map(
-    (note) => `  - title: '${note.title.replace(/'/g, "''")}'
+    (note) => `  - title: '${note.title.replace(/['\']/g, "''")}'
     url: '${note.url}'
     hnUrl: '${note.hnUrl}'
     points: ${note.points}`
@@ -112,8 +112,9 @@ function buildTranscript(
   const transcript = allLines
     .map((line) => {
       // 转义单引号：在 YAML 中，单引号字符串内的单引号需要用两个单引号转义
-      const escapedText = line.text.replace(/'/g, "''")
-      const escapedSpeaker = line.speaker.replace(/'/g, "''")
+      // 需要转义所有类型的单引号：ASCII 单引号 (') 和智能单引号 (')
+      const escapedText = line.text.replace(/['\']/g, "''")
+      const escapedSpeaker = line.speaker.replace(/['\']/g, "''")
       return `  - speaker: '${escapedSpeaker}'
     text: '${escapedText}'`
     })

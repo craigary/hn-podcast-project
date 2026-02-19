@@ -46,7 +46,7 @@ async function getLatestEpisodeNumber(): Promise<number> {
       await kv.setItem(KV_KEY, fsEpisode)
       console.log(`✓ 已同步 KV 期数: ${kvEpisode} → ${fsEpisode}`)
     }
-  } catch (error) {
+  } catch {
     console.log('⚠️  无法访问 KV，使用文件系统期数')
   }
 
