@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "gen": "tsx --env-file=.env main.ts",
-    "start": "tsx --env-file=.env main.ts",
-    "sync-kv": "tsx --env-file=.env sync-kv.ts"
+    "start": "tsx main.ts",
+    "dev": "tsx --env-file=.env main.ts",
+    "sync-kv": "tsx sync-kv.ts",
+    "sync-kv:dev": "tsx --env-file=.env sync-kv.ts"
   },
   "dependencies": {
     "@ai-sdk/cerebras": "^2.0.33",
