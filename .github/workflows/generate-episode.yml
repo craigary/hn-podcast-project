@@ -14,6 +14,11 @@ on:
         description: '日期 YYYY-MM-DD（留空则自动使用昨天）'
         required: false
         type: string
+      force:
+        description: '强制覆盖已存在的文件'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   generate:
@@ -50,6 +55,9 @@ jobs:
           fi
           if [ -n "${{ inputs.date }}" ]; then
             ARGS="$ARGS --date ${{ inputs.date }}"
+          fi
+          if [ "${{ inputs.force }}" = "true" ]; then
+            ARGS="$ARGS --force"
           fi
           pnpm run gen $ARGS
         env:
