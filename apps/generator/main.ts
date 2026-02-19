@@ -6,7 +6,7 @@ import { r2 } from './utils/storage/r2'
 import { kv } from './utils/storage/kv'
 import { convertScriptToMarkdown } from './utils/markdown'
 import { generatePodcastAudio } from './utils/tts'
-import { writeFile, readFile, rm, readdir } from 'fs/promises'
+import { writeFile, readFile, rm, readdir, mkdir } from 'fs/promises'
 import { join } from 'path'
 
 // 解析命令行参数
@@ -188,6 +188,7 @@ async function main() {
 
   // Save cover image to temporary directory for ffmpeg
   const tmpDir = join(process.cwd(), '.tmp')
+  await mkdir(tmpDir, { recursive: true })
   const coverImagePath = join(tmpDir, `cover-${date}.png`)
   await writeFile(coverImagePath, new Uint8Array(imageBuffer))
   console.log(`✅ Cover Image 已保存到临时目录: ${coverImagePath}`)
