@@ -38,6 +38,7 @@ const description = `${podcastConfig.podcast.name} 所有剧集归档`
                 height={300}
                 loading="lazy"
                 class="w-full h-full object-cover transition-transform group-hover:scale-105"
+                transition:name={`episode-cover-${ep.data.id}`}
               />
             ) : (
               <div class="w-full h-full flex items-center justify-center bg-sf-card">
@@ -52,7 +53,7 @@ const description = `${podcastConfig.podcast.name} 所有剧集归档`
               <span>·</span>
               <time datetime={ep.data.date}>{ep.data.date}</time>
             </div>
-            <h3 class="font-serif-display text-base text-tx1 group-hover:text-ac transition-colors leading-snug line-clamp-2">
+            <h3 class="font-serif-display text-base text-tx1 group-hover:text-ac transition-colors leading-snug line-clamp-2" transition:name={`episode-title-${ep.data.id}`}>
               {ep.data.title}
             </h3>
           </div>
