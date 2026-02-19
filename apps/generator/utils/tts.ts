@@ -301,11 +301,14 @@ export const generatePodcastAudio = async (
     finalOutputPath,
   ]
 
-  // 如果提供了封面图片，添加封面嵌入参数
+  // 如果提供了封面图片，添加封面嵌入参数（放在所有音频输入之后）
   if (coverImagePath) {
-    ffmpegArgs.splice(0, 0, '-i', coverImagePath)
-    ffmpegArgs.splice(ffmpegArgs.indexOf('-map') + 2, 0, '-map', `${inputIdx}:0`)
-    ffmpegArgs.splice(ffmpegArgs.indexOf('-y'), 0, '-c:v', 'copy', '-disposition:v:0', 'attached_pic', '-metadata:s:v', 'title=Album cover', '-metadata:s:v', 'comment=Cover (front)')
+    const filterComplexIdx = ffmpegArgs.indexOf('-filter_complex')
+    ffmpegArgs.splice(filterComplexIdx, 0, '-i', coverImagePath)
+    const mapIdx = ffmpegArgs.indexOf('-map')
+    ffmpegArgs.splice(mapIdx + 2, 0, '-map', `${inputIdx}:0`)
+    const yIdx = ffmpegArgs.indexOf('-y')
+    ffmpegArgs.splice(yIdx, 0, '-c:v', 'copy', '-disposition:v:0', 'attached_pic', '-metadata:s:v', 'title=Album cover', '-metadata:s:v', 'comment=Cover (front)')
   }
 
   console.log(`  🚀 运行 ffmpeg 命令...`)
