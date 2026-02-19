@@ -181,10 +181,16 @@ async function main() {
 
   const imageBuffer = await generateCoverImage(coverPrompt)
 
-  // Step 3.1 Save Cover Image to R2
+  // Step 3.1 Save Cover Image to R2 and temporary directory
   const coverImageKey = `episodes/${date}/cover.png`
   await r2.setItemRaw(coverImageKey, new Uint8Array(imageBuffer))
   console.log(`✅ Cover Image 已保存到 R2: ${coverImageKey}`)
+
+  // Save cover image to temporary directory for ffmpeg
+  const tmpDir = join(process.cwd(), '.tmp')
+  const coverImagePath = join(tmpDir, `cover-${date}.png`)
+  await writeFile(coverImagePath, new Uint8Array(imageBuffer))
+  console.log(`✅ Cover Image 已保存到临时目录: ${coverImagePath}`)
 
   // Step 4: Generate Scripts
   console.log('\n📝 开始生成脚本...')
@@ -238,7 +244,7 @@ async function main() {
   // Step 5: Generate Audio
   console.log('\n🎵 开始生成音频...')
   const audioFileName = `episode-${date}.mp3`
-  const audioPath = await generatePodcastAudio(fullScript, audioFileName)
+  const audioPath = await generatePodcastAudio(fullScript, audioFileName, coverImagePath)
 
   // Step 5.1: Upload Audio to R2
   console.log('\n📤 上传音频到 R2...')
@@ -247,9 +253,10 @@ async function main() {
   await r2.setItemRaw(audioKey, new Uint8Array(audioBuffer))
   console.log(`✅ 音频已上传到 R2: ${audioKey}`)
 
-  // Step 5.2: Clean up temporary audio file
+  // Step 5.2: Clean up temporary audio file and cover image
   await rm(audioPath)
-  console.log(`🧹 已清理临时音频文件`)
+  await rm(coverImagePath)
+  console.log(`🧹 已清理临时音频文件和封面图片`)
 
   // Step 6: Convert to Markdown and save locally
   console.log('\n📄 生成 Markdown 文件...')

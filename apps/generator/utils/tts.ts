@@ -25,7 +25,8 @@ interface FullScript {
  */
 export const generatePodcastAudio = async (
   fullScript: FullScript,
-  outputFileName: string
+  outputFileName: string,
+  coverImagePath?: string
 ): Promise<string> => {
   console.log(`\n🔊 [音频合成] 启动高级音频合成 (Fluent-FFmpeg + 情感 TTS)...`)
   const startTime = performance.now()
@@ -299,6 +300,13 @@ export const generatePodcastAudio = async (
     '-y',
     finalOutputPath,
   ]
+
+  // 如果提供了封面图片，添加封面嵌入参数
+  if (coverImagePath) {
+    ffmpegArgs.splice(0, 0, '-i', coverImagePath)
+    ffmpegArgs.splice(ffmpegArgs.indexOf('-map') + 2, 0, '-map', `${inputIdx}:0`)
+    ffmpegArgs.splice(ffmpegArgs.indexOf('-y'), 0, '-c:v', 'copy', '-disposition:v:0', 'attached_pic', '-metadata:s:v', 'title=Album cover', '-metadata:s:v', 'comment=Cover (front)')
+  }
 
   console.log(`  🚀 运行 ffmpeg 命令...`)
   await execa('ffmpeg', ffmpegArgs)
