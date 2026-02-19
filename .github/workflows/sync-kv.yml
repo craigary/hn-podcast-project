@@ -9,18 +9,24 @@ jobs:
 
     steps:
       - name: 签出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: 安装 Bun
-        uses: oven-sh/setup-bun@v2
+      - name: 设置 pnpm
+        uses: pnpm/action-setup@v4
         with:
-          bun-version: latest
+          version: 9
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
 
       - name: 安装依赖
-        run: bun install
+        run: pnpm install
 
       - name: 同步 KV
-        run: bun run --filter generator sync-kv
+        run: pnpm --filter generator sync-kv
         env:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
