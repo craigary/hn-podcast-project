@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "gen": "tsx main.ts",
     "start": "tsx main.ts",
     "dev": "tsx --env-file=.env main.ts",
     "sync-kv": "tsx sync-kv.ts",

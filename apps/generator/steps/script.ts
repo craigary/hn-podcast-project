@@ -102,10 +102,16 @@ ${storiesContext}
       prompt,
     })
 
-    // 使用 pangu 处理每一行的文本
+    // 使用 pangu 处理每一行的文本，并将英文引号转换为中文折角引号
     output.lines = output.lines.map((line) => ({
       ...line,
-      text: pangu.spacingText(line.text),
+      text: pangu.spacingText(line.text)
+        // 先处理智能引号（curly quotes）
+        .replace(/[\u201c\u201d]/g, (match) => match === '\u201c' ? '\u300c' : '\u300d')  // " → 「, " → 」
+        .replace(/[\u2018\u2019]/g, (match) => match === '\u2018' ? '\u300c' : '\u300d')  // ' → 「, ' → 」
+        // 再处理普通引号（straight quotes）
+        .replace(/"([^"]*)"/g, '\u300c$1\u300d')  // "text" → 「text」
+        .replace(/'([^']*)'/g, '\u300c$1\u300d'), // 'text' → 「text」
     }))
 
     console.log(`✅ Segment ${segmentIndex + 1} 脚本生成成功 (${output.lines.length} 轮对话)`)
@@ -141,10 +147,16 @@ export const generateIntroScript = async ({
 - 6-10 轮对话`,
     })
 
-    // 使用 pangu 处理每一行的文本
+    // 使用 pangu 处理每一行的文本，并将英文引号转换为中文折角引号
     output.lines = output.lines.map((line) => ({
       ...line,
-      text: pangu.spacingText(line.text),
+      text: pangu.spacingText(line.text)
+        // 先处理智能引号（curly quotes）
+        .replace(/[\u201c\u201d]/g, (match) => match === '\u201c' ? '\u300c' : '\u300d')  // " → 「, " → 」
+        .replace(/[\u2018\u2019]/g, (match) => match === '\u2018' ? '\u300c' : '\u300d')  // ' → 「, ' → 」
+        // 再处理普通引号（straight quotes）
+        .replace(/"([^"]*)"/g, '\u300c$1\u300d')  // "text" → 「text」
+        .replace(/'([^']*)'/g, '\u300c$1\u300d'), // 'text' → 「text」
     }))
 
     console.log(`✅ 开场脚本生成成功 (${output.lines.length} 轮对话)`)
@@ -180,10 +192,16 @@ export const generateOutroScript = async ({
 - 6-10 轮对话`,
     })
 
-    // 使用 pangu 处理每一行的文本
+    // 使用 pangu 处理每一行的文本，并将英文引号转换为中文折角引号
     output.lines = output.lines.map((line) => ({
       ...line,
-      text: pangu.spacingText(line.text),
+      text: pangu.spacingText(line.text)
+        // 先处理智能引号（curly quotes）
+        .replace(/[\u201c\u201d]/g, (match) => match === '\u201c' ? '\u300c' : '\u300d')  // " → 「, " → 」
+        .replace(/[\u2018\u2019]/g, (match) => match === '\u2018' ? '\u300c' : '\u300d')  // ' → 「, ' → 」
+        // 再处理普通引号（straight quotes）
+        .replace(/"([^"]*)"/g, '\u300c$1\u300d')  // "text" → 「text」
+        .replace(/'([^']*)'/g, '\u300c$1\u300d'), // 'text' → 「text」
     }))
 
     console.log(`✅ 结尾脚本生成成功 (${output.lines.length} 轮对话)`)

@@ -14,6 +14,7 @@ function parseArgs() {
   const args = process.argv.slice(2)
   let episode: number | undefined
   let date: string | undefined
+  let force = false
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--episode' && args[i + 1]) {
@@ -22,29 +23,37 @@ function parseArgs() {
     } else if (args[i] === '--date' && args[i + 1]) {
       date = args[i + 1]
       i++
+    } else if (args[i] === '--force' || args[i] === '-f') {
+      force = true
     }
   }
 
-  return { episode, date }
+  return { episode, date, force }
 }
 
-// 从 KV 获取最新的期数
-async function getLatestEpisodeNumberFromKV(): Promise<number> {
-  const KV_KEY = 'latest_episode_number'
+// 获取最新的期数（优先从文件系统，KV 作为备用）
+async function getLatestEpisodeNumber(): Promise<number> {
+  // 优先从文件系统获取（single source of truth）
+  const fsEpisode = await getLatestEpisodeNumberFromFS()
+
+  // 尝试从 KV 获取并同步
   try {
-    const stored = await kv.getItem(KV_KEY)
-    if (stored && typeof stored === 'number') {
-      return stored
+    const KV_KEY = 'latest_episode_number'
+    const kvEpisode = await kv.getItem(KV_KEY)
+
+    // 如果 KV 中的期数小于文件系统中的期数，更新 KV
+    if (typeof kvEpisode === 'number' && kvEpisode < fsEpisode) {
+      await kv.setItem(KV_KEY, fsEpisode)
+      console.log(`✓ 已同步 KV 期数: ${kvEpisode} → ${fsEpisode}`)
     }
-    // 如果 KV 中没有，尝试从本地文件系统获取
-    return await getLatestEpisodeNumberFromFS()
-  } catch {
-    console.log('⚠️  无法从 KV 读取期数，尝试从文件系统读取')
-    return await getLatestEpisodeNumberFromFS()
+  } catch (error) {
+    console.log('⚠️  无法访问 KV，使用文件系统期数')
   }
+
+  return fsEpisode
 }
 
-// 从文件系统获取最新的期数（备用方案）
+// 从文件系统获取最新的期数（主要方案）
 async function getLatestEpisodeNumberFromFS(): Promise<number> {
   const episodesDir = join(process.cwd(), '..', 'web', 'src', 'content', 'episodes')
   try {
@@ -55,13 +64,25 @@ async function getLatestEpisodeNumberFromFS(): Promise<number> {
       .filter((n) => !isNaN(n))
 
     if (episodeNumbers.length === 0) {
-      return 1 // 如果没有任何期数，从 1 开始
+      return 0 // 如果没有任何期数，返回 0，下一期从 1 开始
     }
 
     return Math.max(...episodeNumbers)
+  } catch (error) {
+    console.log('⚠️  无法读取 episodes 目录:', error)
+    return 0
+  }
+}
+
+// 检查指定期数的文件是否存在
+async function episodeExists(episodeNumber: number): Promise<boolean> {
+  const episodesDir = join(process.cwd(), '..', 'web', 'src', 'content', 'episodes')
+  const markdownPath = join(episodesDir, `${episodeNumber}.md`)
+  try {
+    await readFile(markdownPath)
+    return true
   } catch {
-    console.log('⚠️  无法读取 episodes 目录，使用默认期数 1')
-    return 1
+    return false
   }
 }
 
@@ -97,32 +118,45 @@ function getHackerNewsDate(): string {
 // 主函数
 async function main() {
   // 解析参数
-  const { episode: argEpisode, date: argDate } = parseArgs()
+  const { episode: argEpisode, date: argDate, force } = parseArgs()
 
-  // 确定是否为自动模式（未指定期数和日期）
-  const isAutoMode = !argEpisode && !argDate
+  // 获取文件系统中的最新期数
+  const latestEpisode = await getLatestEpisodeNumber()
 
   // 确定期数和日期
   let EPISODE_NUMBER: number
   let date: string
 
-  if (isAutoMode) {
-    // 自动模式：从 KV 获取最新期数并自增
-    const latestEpisode = await getLatestEpisodeNumberFromKV()
-    EPISODE_NUMBER = latestEpisode + 1
-    date = getHackerNewsDate()
-
-    console.log(`\n📻 自动模式：生成播客 Episode ${EPISODE_NUMBER} (${date})`)
-    console.log(`✓ 从 KV 获取最新期数: ${latestEpisode} → ${EPISODE_NUMBER}`)
-    console.log(`✓ 使用 Hacker News 时区日期（昨天）\n`)
-  } else {
-    // 手动模式：使用指定的期数和日期
-    EPISODE_NUMBER = argEpisode ?? (await getLatestEpisodeNumberFromKV()) + 1
+  if (argEpisode) {
+    // 手动指定期数
+    EPISODE_NUMBER = argEpisode
     date = argDate ?? getHackerNewsDate()
 
-    console.log(`\n📻 手动模式：生成播客 Episode ${EPISODE_NUMBER} (${date})`)
-    console.log(`${argEpisode ? '✓ 手动指定期数' : '✓ 自动获取最新期数'}`)
-    console.log(`${argDate ? '✓ 手动指定日期' : '✓ 使用 Hacker News 时区日期'}\n`)
+    // 检查文件是否已存在
+    const exists = await episodeExists(EPISODE_NUMBER)
+    if (exists && !force) {
+      console.log(`\n⚠️  Episode ${EPISODE_NUMBER} 已存在！`)
+      console.log(`提示：使用 --force 参数强制覆盖`)
+      console.log(`示例：pnpm run gen --episode ${EPISODE_NUMBER} --force\n`)
+      process.exit(0)
+    }
+
+    if (exists && force) {
+      console.log(`\n📻 强制重新生成 Episode ${EPISODE_NUMBER} (${date})`)
+      console.log(`⚠️  将覆盖现有文件\n`)
+    } else {
+      console.log(`\n📻 手动生成 Episode ${EPISODE_NUMBER} (${date})`)
+      console.log(`✓ 手动指定期数: ${EPISODE_NUMBER}`)
+      console.log(`${argDate ? '✓ 手动指定日期' : '✓ 使用 Hacker News 时区日期'}\n`)
+    }
+  } else {
+    // 自动模式：生成下一期
+    EPISODE_NUMBER = latestEpisode + 1
+    date = argDate ?? getHackerNewsDate()
+
+    console.log(`\n📻 自动模式：生成播客 Episode ${EPISODE_NUMBER} (${date})`)
+    console.log(`✓ 从文件系统检测最新期数: ${latestEpisode} → ${EPISODE_NUMBER}`)
+    console.log(`${argDate ? '✓ 手动指定日期' : '✓ 使用 Hacker News 时区日期（昨天）'}\n`)
   }
 
   const rawStories = await fetchHackerNewsTopStories(date)
@@ -237,8 +271,8 @@ async function main() {
   await writeFile(markdownPath, markdown, 'utf-8')
   console.log(`✅ Markdown 已保存到: ${markdownPath}`)
 
-  // Step 7: 更新 KV 中的最新期数（仅在自动模式下）
-  if (isAutoMode) {
+  // Step 7: 更新 KV 中的最新期数（仅在生成新期数时）
+  if (EPISODE_NUMBER > latestEpisode) {
     await updateLatestEpisodeNumberInKV(EPISODE_NUMBER)
   }
 

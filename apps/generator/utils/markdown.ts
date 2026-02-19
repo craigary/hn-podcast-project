@@ -82,8 +82,8 @@ function buildFrontmatter(
   const frontmatter = `---
 id: ${episodeNumber}
 date: '${metadata.date}'
-title: '${metadata.title}'
-desc: '${metadata.description}'
+title: '${metadata.title.replace(/'/g, "''")}'
+desc: '${metadata.description.replace(/'/g, "''")}'
 audioUrl: '${audioUrl}'
 ${coverImageLine}showNotes:
 ${showNotes
@@ -111,10 +111,11 @@ function buildTranscript(
 
   const transcript = allLines
     .map((line) => {
-      // 转义单引号
-      // const text = line.text.replace(/'/g, "''")
-      return `  - speaker: '${line.speaker}'
-    text: '${line.text}'`
+      // 转义单引号：在 YAML 中，单引号字符串内的单引号需要用两个单引号转义
+      const escapedText = line.text.replace(/'/g, "''")
+      const escapedSpeaker = line.speaker.replace(/'/g, "''")
+      return `  - speaker: '${escapedSpeaker}'
+    text: '${escapedText}'`
     })
     .join('\n')
 
