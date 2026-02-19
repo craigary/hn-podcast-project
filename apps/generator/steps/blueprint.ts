@@ -1,8 +1,7 @@
 // Generate Blueprint for the Podcast Script using the processed stories
 
-import { podcastConfig } from '@hn/config'
 import { generateText, Output } from 'ai'
-import { BlueprintSchema, getBlueprintPrompt, PodcastBlueprint } from '../ai/prompts/blueprint'
+import { BlueprintSchema, getBlueprintPrompt } from '../ai/prompts/blueprint'
 import { ProcessedStory } from '../types'
 import { kv } from '../utils/storage/kv'
 import { cerebras } from '../ai/cerebras'

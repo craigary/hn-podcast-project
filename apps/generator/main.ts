@@ -38,7 +38,7 @@ async function getLatestEpisodeNumberFromKV(): Promise<number> {
     }
     // 如果 KV 中没有，尝试从本地文件系统获取
     return await getLatestEpisodeNumberFromFS()
-  } catch (error) {
+  } catch {
     console.log('⚠️  无法从 KV 读取期数，尝试从文件系统读取')
     return await getLatestEpisodeNumberFromFS()
   }
@@ -59,7 +59,7 @@ async function getLatestEpisodeNumberFromFS(): Promise<number> {
     }
 
     return Math.max(...episodeNumbers)
-  } catch (error) {
+  } catch {
     console.log('⚠️  无法读取 episodes 目录，使用默认期数 1')
     return 1
   }

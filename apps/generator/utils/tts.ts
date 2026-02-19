@@ -3,13 +3,10 @@ import { podcastConfig } from '@hn/config'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import type { SegmentScript } from '../ai/prompts/script'
-import ffmpeg from 'fluent-ffmpeg'
-import ffmpegInstaller from '@ffmpeg-installer/ffmpeg'
+import { execa } from 'execa'
 import { readdir, writeFile, mkdir, rm } from 'fs/promises'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
-ffmpeg.setFfmpegPath(ffmpegInstaller.path)
 
 interface FullScript {
   intro: SegmentScript
@@ -44,16 +41,22 @@ export const generatePodcastAudio = async (
   }
 
   const getAudioDuration = async (assetPath: string): Promise<number> => {
-    return new Promise((resolve, reject) => {
-      ffmpeg.ffprobe(assetPath, (error, metadata) => {
-        if (error) {
-          reject(error)
-          return
-        }
-        const duration = metadata.format?.duration
-        resolve(typeof duration === 'number' && duration > 0 ? duration : 0)
-      })
-    })
+    try {
+      const { stdout } = await execa('ffprobe', [
+        '-v',
+        'error',
+        '-show_entries',
+        'format=duration',
+        '-of',
+        'default=noprint_wrappers=1:nokey=1',
+        assetPath,
+      ])
+      const duration = parseFloat(stdout)
+      return duration > 0 ? duration : 0
+    } catch (error) {
+      console.error(`Failed to get duration for ${assetPath}:`, error)
+      return 0
+    }
   }
 
   const trimAsset = async (assetPath: string, name: string): Promise<MusicAsset> => {
@@ -62,14 +65,10 @@ export const generatePodcastAudio = async (
     const maxMusicDuration = podcastConfig.audio.maxMusicDuration
     const targetDuration =
       originalDuration > 0 ? Math.min(maxMusicDuration, originalDuration) : maxMusicDuration
-    return new Promise((resolve, reject) => {
-      ffmpeg(assetPath)
-        .setDuration(targetDuration)
-        .output(outPath)
-        .on('end', () => resolve({ path: outPath, duration: targetDuration }))
-        .on('error', (err) => reject(err))
-        .run()
-    })
+
+    await execa('ffmpeg', ['-i', assetPath, '-t', targetDuration.toString(), '-y', outPath])
+
+    return { path: outPath, duration: targetDuration }
   }
 
   const getRandomAssetAndTrim = async (
@@ -150,14 +149,26 @@ export const generatePodcastAudio = async (
   const concatFiles = async (files: string[], outName: string): Promise<string | null> => {
     if (files.length === 0) return null
     const outPath = path.join(tmpDir, outName)
-    return new Promise((resolve, reject) => {
-      const command = ffmpeg()
-      files.forEach((f) => command.input(f))
-      command
-        .on('error', (err) => reject(err))
-        .on('end', () => resolve(outPath))
-        .mergeToFile(outPath, tmpDir)
-    })
+
+    // 创建 concat 文件列表
+    const concatListPath = path.join(tmpDir, `${outName}.txt`)
+    const concatContent = files.map((f) => `file '${f}'`).join('\n')
+    await writeFile(concatListPath, concatContent)
+
+    await execa('ffmpeg', [
+      '-f',
+      'concat',
+      '-safe',
+      '0',
+      '-i',
+      concatListPath,
+      '-c',
+      'copy',
+      '-y',
+      outPath,
+    ])
+
+    return outPath
   }
 
   console.log('\n  📦 正在预拼接各个章节人声...')
@@ -170,7 +181,6 @@ export const generatePodcastAudio = async (
   // --- 5. 最终混音与全篇拼接 (Filter Complex) ---
   console.log('\n  🎬 正在进行最终全篇混音与渲染...')
 
-  const finalCommand = ffmpeg()
   const { fadeDuration, silenceGap } = podcastConfig.audio
   const musicVolume = 0.25
 
@@ -248,13 +258,14 @@ export const generatePodcastAudio = async (
   let inputIdx = 0
   const concatInputs: string[] = []
   const audioFormat = 'aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo'
+  const ffmpegInputs: string[] = []
 
   clips.forEach((clip, idx) => {
     const clipLabel = `clip_${idx}`
     if (clip.kind === 'silence') {
       filterComplex += `anullsrc=r=44100:cl=stereo:d=${clip.duration}[${clipLabel}];`
     } else {
-      finalCommand.input(clip.path)
+      ffmpegInputs.push('-i', clip.path)
       const inputLabel = `[${inputIdx}:a]`
       inputIdx += 1
       if (clip.kind === 'music') {
@@ -279,27 +290,28 @@ export const generatePodcastAudio = async (
   const finalOutputPath = path.join(__dirname, '../.tmp', outputFileName)
   await mkdir(path.dirname(finalOutputPath), { recursive: true })
 
-  return new Promise<string>((resolve, reject) => {
-    finalCommand
-      .complexFilter(filterComplex, '[final_a]')
-      .on('start', (cmd) => console.log(`  🚀 运行命令: ${cmd}`))
-      .on('error', (err) => {
-        console.error('  ❌ FFmpeg 混音失败:', err.message)
-        reject(err)
-      })
-      .on('end', async () => {
-        const duration = ((performance.now() - startTime) / 1000).toFixed(2)
-        console.log(`\n✅ [音频合成完毕] 耗时: ${duration}秒`)
-        console.log(`📍 文件存放在: ${finalOutputPath}`)
+  const ffmpegArgs = [
+    ...ffmpegInputs,
+    '-filter_complex',
+    filterComplex,
+    '-map',
+    '[final_a]',
+    '-y',
+    finalOutputPath,
+  ]
 
-        // 清理临时目录（保留最终输出文件）
-        await rm(tmpDir, { recursive: true })
-        console.log(`🧹 已清理临时目录: ${tmpDir}`)
+  console.log(`  🚀 运行 ffmpeg 命令...`)
+  await execa('ffmpeg', ffmpegArgs)
 
-        resolve(finalOutputPath)
-      })
-      .save(finalOutputPath)
-  })
+  const duration = ((performance.now() - startTime) / 1000).toFixed(2)
+  console.log(`\n✅ [音频合成完毕] 耗时: ${duration}秒`)
+  console.log(`📍 文件存放在: ${finalOutputPath}`)
+
+  // 清理临时目录（保留最终输出文件）
+  await rm(tmpDir, { recursive: true })
+  console.log(`🧹 已清理临时目录: ${tmpDir}`)
+
+  return finalOutputPath
 }
 
 /**
