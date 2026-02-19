@@ -51,6 +51,7 @@ const { slug, epId, date, title, desc, coverImage } = Astro.props
       <div class="min-w-0">
         <h3
           class="font-serif-display text-xl md:text-2xl text-tx1 group-hover:text-ac transition-colors leading-snug mb-1.5"
+          transition:name={`episode-title-${epId}`}
         >
           {title}
         </h3>
@@ -62,6 +63,7 @@ const { slug, epId, date, title, desc, coverImage } = Astro.props
     <div class="md:hidden">
       <h3
         class="font-serif-display text-xl text-tx1 group-hover:text-ac transition-colors leading-snug mb-1.5"
+        transition:name={`episode-title-${epId}`}
       >
         {title}
       </h3>

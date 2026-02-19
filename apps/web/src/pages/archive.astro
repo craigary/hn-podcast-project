@@ -1,0 +1,64 @@
+---
+import Layout from '../layouts/Layout.astro'
+import { getCollection } from 'astro:content'
+import { Image } from 'astro:assets'
+import { podcastConfig } from '@hn/config'
+
+const episodes = await getCollection('episodes')
+const sorted = episodes.sort((a, b) => b.data.id - a.data.id)
+
+const description = `${podcastConfig.podcast.name} 所有剧集归档`
+---
+
+<Layout
+  title={`归档 - ${podcastConfig.podcast.name}`}
+  description={description}
+  type="website"
+>
+  <div class="max-w-350 mx-auto px-5 md:px-8 py-8">
+
+    <div class="mb-8">
+      <h1 class="font-serif-display text-4xl md:text-5xl text-tx1 mb-3">剧集归档</h1>
+      <p class="text-tx3">共 {sorted.length} 期节目</p>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+      {sorted.map(ep => (
+        <a
+          href={`/${ep.id}`}
+          class="group block no-underline"
+          aria-label={`单集 ${ep.data.id}: ${ep.data.title}`}
+        >
+          <div class="relative aspect-square mb-3 overflow-hidden rounded-lg bg-sf-card border border-bd transition-all group-hover:border-ac group-hover:shadow-lg">
+            {ep.data.coverImage ? (
+              <Image
+                src={ep.data.coverImage}
+                alt={ep.data.title}
+                width={300}
+                height={300}
+                loading="lazy"
+                class="w-full h-full object-cover transition-transform group-hover:scale-105"
+              />
+            ) : (
+              <div class="w-full h-full flex items-center justify-center bg-sf-card">
+                <span class="font-mono-label text-4xl text-tx4">EP{ep.data.id}</span>
+              </div>
+            )}
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 text-xs text-tx4">
+              <span class="font-mono-label">EP{ep.data.id}</span>
+              <span>·</span>
+              <time datetime={ep.data.date}>{ep.data.date}</time>
+            </div>
+            <h3 class="font-serif-display text-base text-tx1 group-hover:text-ac transition-colors leading-snug line-clamp-2">
+              {ep.data.title}
+            </h3>
+          </div>
+        </a>
+      ))}
+    </div>
+
+  </div>
+</Layout>

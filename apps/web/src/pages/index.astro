@@ -71,7 +71,7 @@ const changelog = entries.map(entry => ({
       />
 
       <div class="divide-y divide-bd">
-        {rest.map(ep => (
+        {rest.slice(0, 9).map(ep => (
           <EpisodeItem
             slug={ep.id}
             epId={ep.data.id}
@@ -82,6 +82,20 @@ const changelog = entries.map(entry => ({
           />
         ))}
       </div>
+
+      {sorted.length > 10 && (
+        <div class="mt-8 text-center">
+          <a
+            href="/archive"
+            class="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-tx1 bg-sf-card border border-bd rounded-lg hover:border-ac hover:text-ac transition-all"
+          >
+            查看所有剧集
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+      )}
 
       <!-- Mobile/Tablet sections -->
       <div class="xl:hidden mt-10 space-y-8">

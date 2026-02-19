@@ -63,11 +63,12 @@ const nextEp = sorted[currentIndex - 1]
               height={640}
               loading="eager"
               class="w-32 h-32 md:w-40 md:h-40 object-cover rounded-lg shrink-0 shadow-lg"
+              transition:name={`episode-cover-${epId}`}
             />
           )
         }
         <div class="flex-1 min-w-0">
-          <h1 class="font-serif-display text-3xl md:text-4xl text-tx1 leading-tight mb-3">
+          <h1 class="font-serif-display text-3xl md:text-4xl text-tx1 leading-tight mb-3" transition:name={`episode-title-${epId}`}>
             {title}
           </h1>
           <div class="flex items-center gap-3 font-mono-label text-xs text-tx4 mb-4">
@@ -173,31 +174,67 @@ const nextEp = sorted[currentIndex - 1]
     }
 
     <!-- Episode navigation -->
-    <nav class="flex items-center justify-between border-t border-bd pt-6" aria-label="单集导航">
+    <nav class="flex flex-col sm:flex-row items-stretch gap-3 border-t border-bd pt-6" aria-label="单集导航">
       {
         prevEp ? (
           <a
             href={`/${prevEp.id}`}
-            class="text-sm text-tx2 hover:text-tx1 transition-colors no-underline"
+            class="flex-1 px-4 py-3 text-sm text-tx2 hover:text-tx1 hover:border-ac bg-sf-card border border-bd rounded-lg transition-all no-underline"
             rel="prev"
           >
-            ← EP{prevEp.data.id}: {prevEp.data.title}
+            <div class="flex items-start gap-2">
+              <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              <div class="min-w-0 flex-1">
+                <div class="text-xs text-tx4 mb-0.5">上一期</div>
+                <div class="line-clamp-2">EP{prevEp.data.id}: {prevEp.data.title}</div>
+              </div>
+            </div>
           </a>
         ) : (
-          <span />
+          <div class="flex-1 px-4 py-3 text-sm text-tx4 bg-sf-card border border-bd rounded-lg opacity-50">
+            <div class="flex items-start gap-2">
+              <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              <div>
+                <div class="text-xs mb-0.5">上一期</div>
+                <div>没有更多</div>
+              </div>
+            </div>
+          </div>
         )
       }
       {
         nextEp ? (
           <a
             href={`/${nextEp.id}`}
-            class="text-sm text-tx2 hover:text-tx1 transition-colors no-underline"
+            class="flex-1 px-4 py-3 text-sm text-tx2 hover:text-tx1 hover:border-ac bg-sf-card border border-bd rounded-lg transition-all no-underline sm:text-right"
             rel="next"
           >
-            EP{nextEp.data.id}: {nextEp.data.title} →
+            <div class="flex items-start gap-2 sm:flex-row-reverse">
+              <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              <div class="min-w-0 flex-1">
+                <div class="text-xs text-tx4 mb-0.5">下一期</div>
+                <div class="line-clamp-2">EP{nextEp.data.id}: {nextEp.data.title}</div>
+              </div>
+            </div>
           </a>
         ) : (
-          <span class="text-sm text-tx4">最新一期</span>
+          <div class="flex-1 px-4 py-3 text-sm text-tx4 bg-sf-card border border-bd rounded-lg opacity-50 sm:text-right">
+            <div class="flex items-start gap-2 sm:flex-row-reverse">
+              <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              <div>
+                <div class="text-xs mb-0.5">下一期</div>
+                <div>最新一期</div>
+              </div>
+            </div>
+          </div>
         )
       }
     </nav>

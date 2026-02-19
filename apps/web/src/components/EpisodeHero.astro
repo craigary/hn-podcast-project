@@ -27,6 +27,7 @@ const { slug, epId, date, title, desc, coverImage } = Astro.props
           height={630}
           loading="eager"
           class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          transition:name={`episode-cover-${epId}`}
         />
       ) : (
         <div class="absolute inset-0 bg-linear-to-br from-sf-dim via-sf-card to-sf transition-transform duration-500 group-hover:scale-105">
@@ -44,7 +45,7 @@ const { slug, epId, date, title, desc, coverImage } = Astro.props
       <div class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-3">
         精选 · {date} · EP{epId}
       </div>
-      <h2 class="font-serif-display text-2xl md:text-3xl lg:text-4xl text-tx1 mb-3 leading-tight">
+      <h2 class="font-serif-display text-2xl md:text-3xl lg:text-4xl text-tx1 mb-3 leading-tight" transition:name={`episode-title-${epId}`}>
         {title}
       </h2>
       <p class="text-sm md:text-base text-tx3 leading-relaxed line-clamp-1">
