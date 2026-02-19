@@ -6,7 +6,7 @@ import { imageGenSystemPrompt } from '../ai/prompts/image'
 
 export const generateCoverPrompt = async ({
   blueprint,
-  dateStr
+  dateStr,
 }: {
   blueprint: PodcastBlueprint
   dateStr: string
@@ -24,13 +24,13 @@ export const generateCoverPrompt = async ({
     model: cerebras('gpt-oss-120b'),
     providerOptions: { cerebras: { reasoningEffort: 'medium' } },
     system: imageGenSystemPrompt,
-    prompt: title
+    prompt: title,
   })
 
   const coverPrompt = text.trim()
 
   await kv.setItem(cacheKey, coverPrompt, {
-    expirationTtl: 604_800
+    expirationTtl: 604_800,
   })
 
   console.log(`✅ [Cover Prompt 生成成功] ${coverPrompt.slice(0, 80)}...`)
@@ -43,8 +43,8 @@ export const generateCoverImage = async (prompt: string): Promise<ArrayBuffer> =
 
   const res = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${process.env.POLLINATIONS_API_KEY}`
-    }
+      Authorization: `Bearer ${process.env.POLLINATIONS_API_KEY}`,
+    },
   })
 
   if (!res.ok) {

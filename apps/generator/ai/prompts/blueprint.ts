@@ -4,8 +4,10 @@ import { podcastConfig } from '@hn/config'
 export const BlueprintSchema = z.object({
   episode_overview: z.object({
     title: z.string().describe('本期节目的标题（中文，不要包含日期）'),
-    description: z.string().describe('本期播客的简介描述（2-3 句话，概括本期讨论的核心话题和亮点）'),
-    vibe: z.string().describe('本期节目的生活化氛围设定（场景/噪音/心情），用于开场和转场')
+    description: z
+      .string()
+      .describe('本期播客的简介描述（2-3 句话，概括本期讨论的核心话题和亮点）'),
+    vibe: z.string().describe('本期节目的生活化氛围设定（场景/噪音/心情），用于开场和转场'),
   }),
   segments: z.array(
     z.object({
@@ -15,9 +17,9 @@ export const BlueprintSchema = z.object({
       story_ids: z.array(z.number()).describe('本环节讨论的 Story ID 列表'),
       host_dynamic: z
         .enum(['debate', 'aligned', 'contrarian', 'riff'])
-        .describe('两位主播在本环节的互动模式（对立/一致/唱反调/发散）')
+        .describe('两位主播在本环节的互动模式（对立/一致/唱反调/发散）'),
     })
-  )
+  ),
 })
 
 export type PodcastBlueprint = z.infer<typeof BlueprintSchema>

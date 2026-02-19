@@ -47,7 +47,7 @@ export function setupAudioPlayer() {
       title: titleEl?.textContent || '',
       currentTime: audio.currentTime,
       isPlaying: !audio.paused,
-      isVisible: !bar?.classList.contains('translate-y-full')
+      isVisible: !bar?.classList.contains('translate-y-full'),
     }
     sessionStorage.setItem('audioPlayerState', JSON.stringify(state))
   }
@@ -70,7 +70,7 @@ export function setupAudioPlayer() {
   }
 
   // Global function for playing episodes
-  ;(window as any).playEpisode = function(src: string, title: string) {
+  ;(window as any).playEpisode = function (src: string, title: string) {
     if (!audio) return
     audio.src = src
     if (titleEl) titleEl.textContent = title

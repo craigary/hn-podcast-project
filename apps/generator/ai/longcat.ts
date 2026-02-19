@@ -5,7 +5,7 @@ const longcat = createOpenAICompatible({
   apiKey: process.env.LONGCAT_API_KEY!,
   baseURL: 'https://api.longcat.chat/openai',
   includeUsage: true,
-  supportsStructuredOutputs: true
+  supportsStructuredOutputs: true,
 })
 
 export { longcat }

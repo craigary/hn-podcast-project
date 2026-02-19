@@ -34,12 +34,12 @@ export const fetchHackerNewsTopStories = async (date: string): Promise<RawStory[
     }[]
   }
 
-  return data.hits.map(hit => ({
+  return data.hits.map((hit) => ({
     title: hit.title,
     url: hit.url ?? `https://news.ycombinator.com/item?id=${hit.objectID}`,
     id: Number(hit.objectID),
     date: hit.created_at_i,
-    points: hit.points
+    points: hit.points,
   }))
 }
 

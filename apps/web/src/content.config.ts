@@ -19,7 +19,7 @@ const episodes = defineCollection({
           desc: z.string().optional(),
           url: z.string(),
           hnUrl: z.string(),
-          points: z.number().optional()
+          points: z.number().optional(),
         })
       )
       .optional(),
@@ -27,7 +27,7 @@ const episodes = defineCollection({
       .array(
         z.object({
           speaker: z.string(),
-          text: z.string()
+          text: z.string(),
         })
       )
       .optional(),
@@ -35,11 +35,11 @@ const episodes = defineCollection({
       .array(
         z.object({
           title: z.string(),
-          url: z.string()
+          url: z.string(),
         })
       )
-      .optional()
-  })
+      .optional(),
+  }),
 })
 
 export const collections = { episodes }

@@ -12,15 +12,15 @@
   "dependencies": {
     "@astrojs/rss": "4.0.15-beta.3",
     "@hn/config": "workspace:*",
-    "@tailwindcss/vite": "^4.1.18",
+    "@tailwindcss/vite": "^4.2.0",
     "astro": "6.0.0-beta.13",
-    "marked": "^17.0.2",
-    "tailwindcss": "^4.1.18"
+    "marked": "^17.0.3",
+    "tailwindcss": "^4.2.0"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.7-beta.1",
-    "@iconify-json/lucide": "^1.2.90",
-    "@iconify-json/simple-icons": "^1.2.70",
+    "@iconify-json/lucide": "^1.2.91",
+    "@iconify-json/simple-icons": "^1.2.71",
     "typescript": "^5.9.3",
     "unplugin-icons": "^23.0.1",
     "wrangler": "^4.66.0"

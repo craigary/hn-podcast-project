@@ -10,7 +10,7 @@ import pangu from 'pangu'
 
 export const generateBlueprint = async ({
   allStories,
-  date
+  date,
 }: {
   allStories: ProcessedStory[]
   date: string
@@ -30,11 +30,11 @@ export const generateBlueprint = async ({
     const { output } = await generateText({
       model: cerebras('gpt-oss-120b'),
       output: Output.object({
-        schema: BlueprintSchema
+        schema: BlueprintSchema,
       }),
       providerOptions: { cerebras: { reasoningEffort: 'medium' } },
       system: getBlueprintPrompt(date),
-      prompt: `这是今天的候选情报列表：\n${JSON.stringify(candidates)}`
+      prompt: `这是今天的候选情报列表：\n${JSON.stringify(candidates)}`,
     })
 
     // 使用 pangu 处理中英文空格
@@ -42,7 +42,7 @@ export const generateBlueprint = async ({
     output.episode_overview.description = pangu.spacingText(output.episode_overview.description)
 
     await kv.setItem(cacheKey, JSON.stringify(output), {
-      expirationTtl: 604_800
+      expirationTtl: 604_800,
     })
 
     console.log(`✅ [Blueprint 生成成功] 标题: ${output.episode_overview.title}`)

@@ -9,9 +9,9 @@ async function main() {
   const episodesDir = join(process.cwd(), '..', 'web', 'src', 'content', 'episodes')
   const files = await readdir(episodesDir)
   const episodeNumbers = files
-    .filter(f => f.endsWith('.md'))
-    .map(f => parseInt(f.replace('.md', ''), 10))
-    .filter(n => !isNaN(n))
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => parseInt(f.replace('.md', ''), 10))
+    .filter((n) => !isNaN(n))
 
   if (episodeNumbers.length === 0) {
     console.log('❌ 未找到任何 episode markdown 文件')
@@ -42,7 +42,7 @@ async function main() {
   console.log(`\n✅ 已更新 KV: ${kvValue ?? '未设置'} → ${latestLocal}`)
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('❌ 同步失败:', err)
   process.exit(1)
 })

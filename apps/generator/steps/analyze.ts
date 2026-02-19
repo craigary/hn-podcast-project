@@ -12,16 +12,16 @@ export const fetchStoryContent = async (storyId: number) => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': EXA_API_KEY
+        'x-api-key': EXA_API_KEY,
       },
       body: JSON.stringify({
         ids: [hnUrl],
         text: true,
         highlights: {
           numSentences: 10,
-          highlightsPerUrl: 5
-        }
-      })
+          highlightsPerUrl: 5,
+        },
+      }),
     })
 
     if (!res.ok) return null
@@ -65,7 +65,7 @@ export const analyzeSingleStory = async (story: RawStory): Promise<ProcessedStor
     const { output } = await generateText({
       model: longcat('LongCat-Flash-Chat'),
       output: Output.object({
-        schema: IntelSchema
+        schema: IntelSchema,
       }),
       system: getIntelPrompt(),
       prompt: `
@@ -76,7 +76,7 @@ export const analyzeSingleStory = async (story: RawStory): Promise<ProcessedStor
         
         [Raw Content / Comments Dump]
         ${content}
-      `
+      `,
     })
     // 可以在这里强制把 ID 塞回去，防止 LLM 忘记
     const result = { ...output, ...story }

@@ -23,7 +23,7 @@ export const IntelSchema = z.object({
   // 亮点提取：保留原文的“味道”
   spicy_quote: z
     .string()
-    .describe('评论区最犀利、最搞笑或最刻薄的一句原话（保留原文，若是英文可附带中文意译）')
+    .describe('评论区最犀利、最搞笑或最刻薄的一句原话（保留原文，若是英文可附带中文意译）'),
 })
 
 export type StoryIntel = z.infer<typeof IntelSchema>

@@ -10,7 +10,7 @@ export async function GET() {
     title: podcastConfig.podcast.name,
     description: podcastConfig.podcast.tagline,
     site: podcastConfig.site.url,
-    items: sorted.map(episode => ({
+    items: sorted.map((episode) => ({
       title: `EP${episode.data.id}: ${episode.data.title}`,
       description: episode.data.desc,
       link: `/${episode.id}`,
@@ -19,7 +19,7 @@ export async function GET() {
         ? {
             url: episode.data.audioUrl,
             type: 'audio/mpeg',
-            length: 0 // 可以后续添加实际文件大小
+            length: 0, // 可以后续添加实际文件大小
           }
         : undefined,
       customData: `
@@ -28,7 +28,7 @@ export async function GET() {
         <itunes:summary>${episode.data.desc}</itunes:summary>
         <itunes:duration>${episode.data.duration || ''}</itunes:duration>
         ${episode.data.coverImage ? `<itunes:image href="${episode.data.coverImage}" />` : ''}
-      `
+      `,
     })),
     customData: `
       <language>zh-CN</language>
@@ -44,7 +44,7 @@ export async function GET() {
       <itunes:category text="News" />
     `,
     xmlns: {
-      itunes: 'http://www.itunes.com/dtds/podcast-1.0.dtd'
-    }
+      itunes: 'http://www.itunes.com/dtds/podcast-1.0.dtd',
+    },
   })
 }

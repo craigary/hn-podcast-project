@@ -8,9 +8,9 @@ export const SegmentScriptSchema = z.object({
       text: z.string().describe('对话内容'),
       emotion: z
         .enum(['neutral', 'excited', 'sarcastic', 'thoughtful', 'frustrated', 'amused'])
-        .describe('情绪标记，用于后续语音合成')
+        .describe('情绪标记，用于后续语音合成'),
     })
-  )
+  ),
 })
 
 export type SegmentScript = z.infer<typeof SegmentScriptSchema>

@@ -53,12 +53,12 @@ async function getEndpointToken(): Promise<AzureAuth> {
     'X-ClientTraceId': crypto.randomUUID(),
     'X-MT-Signature': signature,
     'User-Agent': 'okhttp/4.5.0',
-    'Content-Type': 'application/json; charset=utf-8'
+    'Content-Type': 'application/json; charset=utf-8',
   }
 
   const response = await fetch(ENDPOINT_URL, {
     method: 'POST',
-    headers
+    headers,
   })
 
   if (!response.ok) throw new Error(`获取 Azure 令牌失败: ${response.statusText}`)
@@ -75,7 +75,7 @@ async function getEndpointToken(): Promise<AzureAuth> {
   return {
     token: data.t,
     region: data.r,
-    expiredAt: jwtPayload.exp * 1000
+    expiredAt: jwtPayload.exp * 1000,
   }
 }
 
@@ -116,13 +116,13 @@ export async function synthesizeSpeech(
       Authorization: authCache.token,
       'Content-Type': 'application/ssml+xml',
       'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
-      'User-Agent': 'okhttp/4.5.0'
+      'User-Agent': 'okhttp/4.5.0',
     }
 
     const response = await fetch(url, {
       method: 'POST',
       headers,
-      body: ssml
+      body: ssml,
     })
 
     if (!response.ok) {

@@ -50,9 +50,9 @@ async function getLatestEpisodeNumberFromFS(): Promise<number> {
   try {
     const files = await readdir(episodesDir)
     const episodeNumbers = files
-      .filter(f => f.endsWith('.md'))
-      .map(f => parseInt(f.replace('.md', ''), 10))
-      .filter(n => !isNaN(n))
+      .filter((f) => f.endsWith('.md'))
+      .map((f) => parseInt(f.replace('.md', ''), 10))
+      .filter((n) => !isNaN(n))
 
     if (episodeNumbers.length === 0) {
       return 1 // 如果没有任何期数，从 1 开始
@@ -131,7 +131,7 @@ async function main() {
   // Step 2: Generate Blueprints for the Podcast Script using the processed stories
   const blueprint = await generateBlueprint({
     allStories: processedStories,
-    date
+    date,
   })
 
   // Step 2.1 Save Blueprint to R2
@@ -142,7 +142,7 @@ async function main() {
   // Step 3, Generate Cover Image.
   const coverPrompt = await generateCoverPrompt({
     blueprint: blueprint,
-    dateStr: date
+    dateStr: date,
   })
 
   const imageBuffer = await generateCoverImage(coverPrompt)
@@ -158,7 +158,7 @@ async function main() {
   // Step 4.1: Generate Intro Script
   const introScript = await generateIntroScript({
     episodeOverview: blueprint.episode_overview,
-    date
+    date,
   })
 
   // Step 4.2: Generate Segment Scripts
@@ -171,7 +171,7 @@ async function main() {
       allStories: processedStories,
       episodeOverview: blueprint.episode_overview,
       segmentIndex: i,
-      date
+      date,
     })
     segmentScripts.push(segmentScript)
   }
@@ -179,7 +179,7 @@ async function main() {
   // Step 4.3: Generate Outro Script
   const outroScript = await generateOutroScript({
     episodeOverview: blueprint.episode_overview,
-    date
+    date,
   })
 
   // Step 4.4: Combine all scripts
@@ -192,8 +192,8 @@ async function main() {
       title: blueprint.episode_overview.title,
       description: blueprint.episode_overview.description,
       vibe: blueprint.episode_overview.vibe,
-      totalSegments: blueprint.segments.length
-    }
+      totalSegments: blueprint.segments.length,
+    },
   }
 
   // Step 4.5: Save Full Script to R2

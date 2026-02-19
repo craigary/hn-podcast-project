@@ -18,12 +18,12 @@ export const fetchCommentInsights = async (storyId: number) => {
         ids: [hnUrl],
         highlights: {
           numSentences: 3,
-          highlightsPerUrl: 10
+          highlightsPerUrl: 10,
         },
         summary: {
-          query: 'What are the most controversial and insightful opinions in the comments?'
-        }
-      })
+          query: 'What are the most controversial and insightful opinions in the comments?',
+        },
+      }),
     })
 
     if (!res.ok) return { highlights: '', summary: '' }
@@ -32,7 +32,7 @@ export const fetchCommentInsights = async (storyId: number) => {
     const result = data.results?.[0]
     return {
       highlights: result?.highlights ? (result?.highlights?.[0] ?? '') : '',
-      summary: result?.summary ?? ''
+      summary: result?.summary ?? '',
     }
   } catch {
     return { highlights: '', summary: '' }
@@ -46,8 +46,8 @@ export const fetchContentByExa = async (url: string) => {
       headers: { 'content-type': 'application/json', 'x-api-key': EXA_API_KEY },
       body: JSON.stringify({
         ids: [url],
-        text: true
-      })
+        text: true,
+      }),
     })
 
     if (!res.ok) return ''

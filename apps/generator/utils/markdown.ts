@@ -64,18 +64,18 @@ function buildFrontmatter(
 ): string {
   // 收集所有在 blueprint 中被引用的故事
   const storyIds = new Set<number>()
-  blueprint.segments.forEach(segment => {
-    segment.story_ids.forEach(id => storyIds.add(id))
+  blueprint.segments.forEach((segment) => {
+    segment.story_ids.forEach((id) => storyIds.add(id))
   })
 
   // 获取对应的故事信息
   const showNotes = allStories
-    .filter(story => storyIds.has(story.id!))
-    .map(story => ({
+    .filter((story) => storyIds.has(story.id!))
+    .map((story) => ({
       title: story.title,
       url: story.url,
       hnUrl: `https://news.ycombinator.com/item?id=${story.id}`,
-      points: story.points
+      points: story.points,
     }))
 
   const coverImageLine = coverImageUrl ? `coverImage: '${coverImageUrl}'\n` : ''
@@ -89,7 +89,7 @@ audioUrl: '${audioUrl}'
 ${coverImageLine}showNotes:
 ${showNotes
   .map(
-    note => `  - title: '${note.title.replace(/'/g, "''")}'
+    (note) => `  - title: '${note.title.replace(/'/g, "''")}'
     url: '${note.url}'
     hnUrl: '${note.hnUrl}'
     points: ${note.points}`
@@ -108,10 +108,10 @@ function buildTranscript(
   segments: SegmentScript[],
   outro: SegmentScript
 ): string {
-  const allLines = [...intro.lines, ...segments.flatMap(segment => segment.lines), ...outro.lines]
+  const allLines = [...intro.lines, ...segments.flatMap((segment) => segment.lines), ...outro.lines]
 
   const transcript = allLines
-    .map(line => {
+    .map((line) => {
       // 转义单引号
       // const text = line.text.replace(/'/g, "''")
       return `  - speaker: '${line.speaker}'

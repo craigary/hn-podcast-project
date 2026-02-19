@@ -9,7 +9,7 @@ import {
   getScriptPrompt,
   getIntroPrompt,
   getOutroPrompt,
-  SegmentScript
+  SegmentScript,
 } from '../ai/prompts/script'
 import { fetchContentByExa } from '../utils/exa'
 import { mistral } from '../ai/mistral'
@@ -31,12 +31,12 @@ export const generateSegmentScript = async ({
   allStories,
   episodeOverview,
   segmentIndex,
-  date
+  date,
 }: GenerateSegmentScriptParams): Promise<SegmentScript> => {
   console.log(`🎬 生成 Segment ${segmentIndex + 1} 脚本 (${segment.segment_type})...`)
 
   // 获取本环节涉及的故事
-  const segmentStories = allStories.filter(story => segment.story_ids.includes(story.id!))
+  const segmentStories = allStories.filter((story) => segment.story_ids.includes(story.id!))
 
   if (segmentStories.length === 0) {
     throw new Error(`Segment ${segmentIndex + 1} 没有找到对应的故事`)
@@ -45,7 +45,7 @@ export const generateSegmentScript = async ({
   // 获取每个故事的原始网站内容
   console.log(`📥 获取 ${segmentStories.length} 个故事的原始内容...`)
   const storiesWithContent = await Promise.all(
-    segmentStories.map(async story => {
+    segmentStories.map(async (story) => {
       if (!story.url) return { story, content: '' }
 
       const content = await fetchContentByExa(story.url)
@@ -91,7 +91,7 @@ ${storiesContext}
     const { output } = await generateText({
       model: model,
       output: Output.object({
-        schema: SegmentScriptSchema
+        schema: SegmentScriptSchema,
       }),
       system: getScriptPrompt(
         segment.segment_type,
@@ -99,13 +99,13 @@ ${storiesContext}
         episodeOverview.vibe,
         date
       ),
-      prompt
+      prompt,
     })
 
     // 使用 pangu 处理每一行的文本
-    output.lines = output.lines.map(line => ({
+    output.lines = output.lines.map((line) => ({
       ...line,
-      text: pangu.spacingText(line.text)
+      text: pangu.spacingText(line.text),
     }))
 
     console.log(`✅ Segment ${segmentIndex + 1} 脚本生成成功 (${output.lines.length} 轮对话)`)
@@ -118,7 +118,7 @@ ${storiesContext}
 
 export const generateIntroScript = async ({
   episodeOverview,
-  date
+  date,
 }: {
   episodeOverview: PodcastBlueprint['episode_overview']
   date: string
@@ -129,7 +129,7 @@ export const generateIntroScript = async ({
     const { output } = await generateText({
       model: model,
       output: Output.object({
-        schema: SegmentScriptSchema
+        schema: SegmentScriptSchema,
       }),
       system: getIntroPrompt(episodeOverview.vibe, episodeOverview.title, date),
       prompt: `请创作本期节目的开场对话。
@@ -138,13 +138,13 @@ export const generateIntroScript = async ({
 - 从氛围背景自然切入
 - 介绍今天的主题：${episodeOverview.title}
 - 保持轻松、自然的对话风格
-- 6-10 轮对话`
+- 6-10 轮对话`,
     })
 
     // 使用 pangu 处理每一行的文本
-    output.lines = output.lines.map(line => ({
+    output.lines = output.lines.map((line) => ({
       ...line,
-      text: pangu.spacingText(line.text)
+      text: pangu.spacingText(line.text),
     }))
 
     console.log(`✅ 开场脚本生成成功 (${output.lines.length} 轮对话)`)
@@ -157,7 +157,7 @@ export const generateIntroScript = async ({
 
 export const generateOutroScript = async ({
   episodeOverview,
-  date
+  date,
 }: {
   episodeOverview: PodcastBlueprint['episode_overview']
   date: string
@@ -168,7 +168,7 @@ export const generateOutroScript = async ({
     const { output } = await generateText({
       model: model,
       output: Output.object({
-        schema: SegmentScriptSchema
+        schema: SegmentScriptSchema,
       }),
       system: getOutroPrompt(episodeOverview.vibe, episodeOverview.title, date),
       prompt: `请创作本期节目的结尾对话。
@@ -177,13 +177,13 @@ export const generateOutroScript = async ({
 - 自然地收尾，不要太正式
 - 可以简单总结今天的感受
 - 保持人设，轻松告别
-- 6-10 轮对话`
+- 6-10 轮对话`,
     })
 
     // 使用 pangu 处理每一行的文本
-    output.lines = output.lines.map(line => ({
+    output.lines = output.lines.map((line) => ({
       ...line,
-      text: pangu.spacingText(line.text)
+      text: pangu.spacingText(line.text),
     }))
 
     console.log(`✅ 结尾脚本生成成功 (${output.lines.length} 轮对话)`)

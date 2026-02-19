@@ -5,7 +5,7 @@ const openai = createOpenAICompatible({
   apiKey: process.env.OPENAI_API_KEY!,
   baseURL: 'https://x666.me/v1',
   includeUsage: true,
-  supportsStructuredOutputs: true
+  supportsStructuredOutputs: true,
 })
 
 export { openai }
