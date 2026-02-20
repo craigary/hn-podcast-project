@@ -5,6 +5,15 @@ import { EXA_API_KEY, EXA_BASE_URL } from '../utils/exa'
 import { longcat } from '../ai/longcat'
 import { kv } from '../utils/storage/kv'
 
+interface ExaContentResult {
+  text?: string
+  highlights?: string[]
+}
+
+interface ExaContentResponse {
+  results?: ExaContentResult[]
+}
+
 export const fetchStoryContent = async (storyId: number) => {
   const hnUrl = `https://news.ycombinator.com/item?id=${storyId}`
   try {
@@ -26,7 +35,7 @@ export const fetchStoryContent = async (storyId: number) => {
 
     if (!res.ok) return null
 
-    const data = (await res.json()) as any
+    const data = (await res.json()) as ExaContentResponse
     const result = data.results?.[0]
 
     // 组合 Exa 返回的文本，构成上下文

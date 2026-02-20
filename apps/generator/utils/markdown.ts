@@ -214,14 +214,14 @@ async function buildFrontmatter(
   const frontmatter = `---
 id: ${episodeNumber}
 date: '${metadata.date}'
-title: '${metadata.title.replace(/['\']/g, "''")}'
-desc: '${metadata.description.replace(/['\']/g, "''")}'
+title: '${metadata.title.replace(/['\\]/g, "''")}'
+desc: '${metadata.description.replace(/['\\]/g, "''")}'
 audioUrl: '${audioUrl}'
 ${coverImageLine}chapters:
 ${chapters
   .map(
-    (chapter) => `  - title: '${chapter.title.replace(/['\']/g, "''")}'
-    desc: '${chapter.desc.replace(/['\']/g, "''")}'
+    (chapter) => `  - title: '${chapter.title.replace(/['\\]/g, "''")}'
+    desc: '${chapter.desc.replace(/['\\]/g, "''")}'
     start: ${chapter.start}
     storyIds: [${chapter.storyIds.join(', ')}]`
   )
@@ -229,7 +229,7 @@ ${chapters
 links:
 ${links
   .map(
-    (link) => `  - title: '${link.title.replace(/['\']/g, "''")}'
+    (link) => `  - title: '${link.title.replace(/['\\]/g, "''")}'
     url: '${link.url}'
     hnUrl: '${link.hnUrl}'
     points: ${link.points}`
@@ -252,8 +252,8 @@ function buildTranscript(
 
   const transcript = allLines
     .map((line) => {
-      const escapedText = line.text.replace(/['\']/g, "''")
-      const escapedSpeaker = line.speaker.replace(/['\']/g, "''")
+      const escapedText = line.text.replace(/['\\]/g, "''")
+      const escapedSpeaker = line.speaker.replace(/['\\]/g, "''")
       const timeLine =
         line.start !== undefined ? `\n    start: ${line.start}\n    end: ${line.end}` : ''
       return `  - speaker: '${escapedSpeaker}'
