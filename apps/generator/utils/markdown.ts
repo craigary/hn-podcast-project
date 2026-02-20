@@ -4,6 +4,7 @@ import type { FullScriptWithTimeline } from './tts'
 import { generateText, Output } from 'ai'
 import { mistral } from '../ai/mistral'
 import { z } from 'zod'
+import pangu from 'pangu'
 
 const model = mistral('mistral-large-latest')
 
@@ -51,9 +52,7 @@ async function generateChapters(
     const startTime = segmentLines.length > 0 ? segmentLines[0].start || currentTime : currentTime
 
     // 提取该 segment 的对话内容（用于 AI 总结）
-    const dialogueText = segmentLines
-      .map((line) => `${line.speaker}: ${line.text}`)
-      .join('\n')
+    const dialogueText = segmentLines.map((line) => `${line.speaker}: ${line.text}`).join('\n')
 
     // 获取该 segment 讨论的故事信息
     const segmentStories = allStories.filter((story) => segment.story_ids.includes(story.id!))
@@ -85,14 +84,42 @@ ${dialogueText.slice(0, 2000)}
 请生成吸引人的章节标题和描述。`,
       })
 
+      // 处理标题：转换引号 + pangu 空格
+      let processedTitle = output.title
+        // 先处理智能引号（curly quotes）
+        .replace(/[\u201c\u201d]/g, (match) => (match === '\u201c' ? '\u300c' : '\u300d')) // " → 「, " → 」
+        .replace(/[\u2018\u2019]/g, (match) => (match === '\u2018' ? '\u300c' : '\u300d')) // ' → 「, ' → 」
+        // 处理已有的中文引号（统一为折角引号）
+        .replace(/[\u300e\u300f]/g, (match) => (match === '\u300e' ? '\u300c' : '\u300d')) // 『 → 「, 』 → 」
+        .replace(/[\u3010\u3011]/g, (match) => (match === '\u3010' ? '\u300c' : '\u300d')) // 【 → 「, 】 → 」
+        // 再处理普通引号（straight quotes）
+        .replace(/"([^"]*)"/g, '\u300c$1\u300d') // "text" → 「text」
+        .replace(/'([^']*)'/g, '\u300c$1\u300d') // 'text' → 「text」
+
+      processedTitle = pangu.spacingText(processedTitle)
+
+      // 处理描述：转换引号 + pangu 空格
+      let processedDesc = output.desc
+        // 先处理智能引号（curly quotes）
+        .replace(/[\u201c\u201d]/g, (match) => (match === '\u201c' ? '\u300c' : '\u300d')) // " → 「, " → 」
+        .replace(/[\u2018\u2019]/g, (match) => (match === '\u2018' ? '\u300c' : '\u300d')) // ' → 「, ' → 」
+        // 处理已有的中文引号（统一为折角引号）
+        .replace(/[\u300e\u300f]/g, (match) => (match === '\u300e' ? '\u300c' : '\u300d')) // 『 → 「, 』 → 」
+        .replace(/[\u3010\u3011]/g, (match) => (match === '\u3010' ? '\u300c' : '\u300d')) // 【 → 「, 】 → 」
+        // 再处理普通引号（straight quotes）
+        .replace(/"([^"]*)"/g, '\u300c$1\u300d') // "text" → 「text」
+        .replace(/'([^']*)'/g, '\u300c$1\u300d') // 'text' → 「text」
+
+      processedDesc = pangu.spacingText(processedDesc)
+
       chapters.push({
-        title: output.title,
-        desc: output.desc,
+        title: processedTitle,
+        desc: processedDesc,
         start: Math.floor(startTime),
         storyIds: segment.story_ids,
       })
 
-      console.log(`✅ Chapter ${i + 1}: ${output.title}`)
+      console.log(`✅ Chapter ${i + 1}: ${processedTitle}`)
     } catch (error) {
       console.error(`❌ 生成 Chapter ${i + 1} 失败:`, error)
       // 使用默认值
