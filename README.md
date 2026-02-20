@@ -5,7 +5,7 @@
 ## 核心功能
 
 - **自动化选题**：根据分数和日期，自动抓取 Hacker News 上的热门讨论。
-- **AI 驱动脚本创作**：利用 Cerebras (Llama 3.1 70B) 和 Mistral Large 模型，生成播客大纲和生动自然的对话脚本。
+- **AI 驱动脚本创作**：利用 Cerebras (gpt-oss-120b) 和 Mistral Large 模型，生成播客大纲和生动自然的对话脚本。
 - **个性化主持人**：
   - **小雅**：Web 开发/前端专家，性格直率，效率至上，拥抱 AI。
   - **老冯**：底层架构/系统老兵，老油条，技术深度极高，喜欢冷嘲热讽。
@@ -86,6 +86,6 @@ pnpm dev
 - **开发语言**: TypeScript
 - **运行环境**: Node.js
 - **前端框架**: Astro
-- **AI 模型**: Cerebras (Llama 3.1), Mistral, Pollinations
+- **AI 模型**: Cerebras (gpt-oss-120b), Mistral, Pollinations
 - **音频处理**: FFmpeg, Microsoft Azure TTS
 - **云服务**: Cloudflare R2 (对象存储), Cloudflare KV (键值存储)
