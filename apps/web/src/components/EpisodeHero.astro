@@ -27,7 +27,6 @@ const { slug, epId, date, title, desc, coverImage } = Astro.props
           height={630}
           loading="eager"
           class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          transition:name={`episode-cover-${epId}`}
         />
       ) : (
         <div class="absolute inset-0 bg-linear-to-br from-sf-dim via-sf-card to-sf transition-transform duration-500 group-hover:scale-105">
