@@ -64,7 +64,7 @@ importers:
         version: 6.0.90(zod@4.3.6)
       ai-sdk-provider-gemini-cli:
         specifier: ^2.0.1
-        version: 2.0.1(@modelcontextprotocol/sdk@1.26.0(zod@3.25.76))(@opentelemetry/core@2.5.1(@opentelemetry/api@1.9.0))(@opentelemetry/resources@2.5.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-metrics@2.0.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.0.1(@opentelemetry/api@1.9.0))(zod@4.3.6)
+        version: 2.0.1(@modelcontextprotocol/sdk@1.26.0(zod@4.3.6))(@opentelemetry/core@2.5.1(@opentelemetry/api@1.9.0))(@opentelemetry/resources@2.5.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-metrics@2.0.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.0.1(@opentelemetry/api@1.9.0))(zod@4.3.6)
       aws4fetch:
         specifier: ^1.0.20
         version: 1.0.20
@@ -94,8 +94,8 @@ importers:
   apps/web:
     dependencies:
       '@astrojs/rss':
-        specifier: ^4.0.15
-        version: 4.0.15
+        specifier: 4.0.15-beta.3
+        version: 4.0.15-beta.3
       '@hn/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -210,8 +210,8 @@ packages:
     resolution: {integrity: sha512-3snR85nTXnXvgmFJ43AacCQcylk+mpsiQ5Gmr9hcR5IrEA6+EvaYfaF9jlxZqJIZYey/9ubSRmaERtwDhV/FeA==}
     engines: {node: ^20.19.1 || >=22.12.0}
 
-  '@astrojs/rss@4.0.15':
-    resolution: {integrity: sha512-uXO/k6AhRkIDXmRoc6xQpoPZrimQNUmS43X4+60yunfuMNHtSRN5e/FiSi7NApcZqmugSMc5+cJi8ovqgO+qIg==}
+  '@astrojs/rss@4.0.15-beta.3':
+    resolution: {integrity: sha512-GJSBEmX6ziCIY85ssTsvICpPRUovfVSkCd22yb7pYp52cnou16MmK1VYrQB8URW4ElIxTP631wI+ExkE/k5D3g==}
 
   '@astrojs/telemetry@3.3.0':
     resolution: {integrity: sha512-UFBgfeldP06qu6khs/yY+q1cDAaArM2/7AEIqQ9Cuvf7B1hNLq0xDrZkct+QoIGyjq56y8IaE2I3CTvG99mlhQ==}
@@ -4580,10 +4580,11 @@ snapshots:
     dependencies:
       prismjs: 1.30.0
 
-  '@astrojs/rss@4.0.15':
+  '@astrojs/rss@4.0.15-beta.3':
     dependencies:
       fast-xml-parser: 5.3.6
       piccolore: 0.1.3
+      zod: 4.3.6
 
   '@astrojs/telemetry@3.3.0':
     dependencies:
@@ -6061,7 +6062,7 @@ snapshots:
 
   agent-base@7.1.4: {}
 
-  ai-sdk-provider-gemini-cli@2.0.1(@modelcontextprotocol/sdk@1.26.0(zod@3.25.76))(@opentelemetry/core@2.5.1(@opentelemetry/api@1.9.0))(@opentelemetry/resources@2.5.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-metrics@2.0.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.0.1(@opentelemetry/api@1.9.0))(zod@4.3.6):
+  ai-sdk-provider-gemini-cli@2.0.1(@modelcontextprotocol/sdk@1.26.0(zod@4.3.6))(@opentelemetry/core@2.5.1(@opentelemetry/api@1.9.0))(@opentelemetry/resources@2.5.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-metrics@2.0.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.0.1(@opentelemetry/api@1.9.0))(zod@4.3.6):
     dependencies:
       '@ai-sdk/provider': 3.0.8
       '@ai-sdk/provider-utils': 4.0.15(zod@4.3.6)

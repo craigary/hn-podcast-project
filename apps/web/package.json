@@ -10,7 +10,7 @@
     "generate-types": "wrangler types"
   },
   "dependencies": {
-    "@astrojs/rss": "^4.0.15",
+    "@astrojs/rss": "4.0.15-beta.3",
     "@hn/config": "workspace:*",
     "@tailwindcss/vite": "^4.2.0",
     "astro": "6.0.0-beta.14",
