@@ -182,11 +182,22 @@ export const generatePodcastAudio = async (
   }
 
   console.log('\n  📦 正在预拼接各个章节人声...')
-  const vIntro = await concatFiles(introResults.map((r) => r.path), 'v_intro.mp3')
-  const vSegs = await Promise.all(
-    segmentVoiceResults.map((results, i) => concatFiles(results.map((r) => r.path), `v_seg_${i}.mp3`))
+  const vIntro = await concatFiles(
+    introResults.map((r) => r.path),
+    'v_intro.mp3'
   )
-  const vOutro = await concatFiles(outroResults.map((r) => r.path), 'v_outro.mp3')
+  const vSegs = await Promise.all(
+    segmentVoiceResults.map((results, i) =>
+      concatFiles(
+        results.map((r) => r.path),
+        `v_seg_${i}.mp3`
+      )
+    )
+  )
+  const vOutro = await concatFiles(
+    outroResults.map((r) => r.path),
+    'v_outro.mp3'
+  )
 
   // --- 5. 最终混音与全篇拼接 (Filter Complex) ---
   console.log('\n  🎬 正在进行最终全篇混音与渲染...')
@@ -265,7 +276,9 @@ export const generatePodcastAudio = async (
   const voiceSectionMap = new Map<string, SectionRef>()
   if (vIntro) voiceSectionMap.set(vIntro, { section: 'intro' })
   if (vOutro) voiceSectionMap.set(vOutro, { section: 'outro' })
-  vSegs.forEach((p, i) => { if (p) voiceSectionMap.set(p, { section: 'segment', segIdx: i }) })
+  vSegs.forEach((p, i) => {
+    if (p) voiceSectionMap.set(p, { section: 'segment', segIdx: i })
+  })
 
   const sectionTimestamps: Map<string, { start: number; end: number }[]> = new Map()
   let currentTime = 0
@@ -298,15 +311,19 @@ export const generatePodcastAudio = async (
     script: SegmentScript,
     ts: { start: number; end: number }[]
   ): SegmentScriptWithTimeline => ({
-    lines: script.lines.map((line, i) => ({ ...line, start: ts[i]?.start ?? 0, end: ts[i]?.end ?? 0 })),
+    lines: script.lines.map((line, i) => ({
+      ...line,
+      start: ts[i]?.start ?? 0,
+      end: ts[i]?.end ?? 0,
+    })),
   })
 
   const scriptWithTimeline: FullScriptWithTimeline = {
-    intro: addTimeline(fullScript.intro, vIntro ? sectionTimestamps.get(vIntro) ?? [] : []),
+    intro: addTimeline(fullScript.intro, vIntro ? (sectionTimestamps.get(vIntro) ?? []) : []),
     segments: fullScript.segments.map((seg, i) =>
-      addTimeline(seg, vSegs[i] ? sectionTimestamps.get(vSegs[i]!) ?? [] : [])
+      addTimeline(seg, vSegs[i] ? (sectionTimestamps.get(vSegs[i]!) ?? []) : [])
     ),
-    outro: addTimeline(fullScript.outro, vOutro ? sectionTimestamps.get(vOutro) ?? [] : []),
+    outro: addTimeline(fullScript.outro, vOutro ? (sectionTimestamps.get(vOutro) ?? []) : []),
     metadata: fullScript.metadata,
   }
 
@@ -367,7 +384,18 @@ export const generatePodcastAudio = async (
     const mapIdx = ffmpegArgs.indexOf('-map')
     ffmpegArgs.splice(mapIdx + 2, 0, '-map', `${inputIdx}:0`)
     const yIdx = ffmpegArgs.indexOf('-y')
-    ffmpegArgs.splice(yIdx, 0, '-c:v', 'copy', '-disposition:v:0', 'attached_pic', '-metadata:s:v', 'title=Album cover', '-metadata:s:v', 'comment=Cover (front)')
+    ffmpegArgs.splice(
+      yIdx,
+      0,
+      '-c:v',
+      'copy',
+      '-disposition:v:0',
+      'attached_pic',
+      '-metadata:s:v',
+      'title=Album cover',
+      '-metadata:s:v',
+      'comment=Cover (front)'
+    )
   }
 
   console.log(`  🚀 运行 ffmpeg 命令...`)

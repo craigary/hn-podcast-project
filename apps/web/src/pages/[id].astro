@@ -309,55 +309,12 @@ const nextEp = sorted[currentIndex - 1]
         var toggleText = document.getElementById('transcript-toggle-text')
         var toggleIcon = document.getElementById('transcript-toggle-icon')
         if (!btn || !content || !toggleText || !toggleIcon) return
-        btn.addEventListener('click', function () {
+        btn.onclick = function () {
           var isHidden = content.classList.toggle('hidden')
           btn.setAttribute('aria-expanded', isHidden ? 'false' : 'true')
           toggleText.textContent = isHidden ? '展开对话文本' : '收起对话文本'
           toggleIcon.textContent = isHidden ? ' ▼' : ' ▲'
-        })
-
-        // 对话文本点击时间戳跳转
-        var episodePlayBtn = document.getElementById('episode-play-btn')
-        content.addEventListener('click', function (e) {
-          var target = e.target
-          while (target && target !== content) {
-            if (target.classList && target.classList.contains('transcript-seek')) {
-              var time = parseFloat(target.getAttribute('data-time'))
-              if (isNaN(time)) return
-              var audio = document.getElementById('podcast-audio')
-              if (!audio) return
-              var audioUrl = episodePlayBtn && episodePlayBtn.getAttribute('data-audio-url')
-              var isCurrentEpisode = audio.src && audio.src.endsWith(audioUrl || '')
-              if (!isCurrentEpisode && audioUrl && window.playEpisode) {
-                var title = episodePlayBtn.getAttribute('data-episode-title') || ''
-                window.playEpisode(audioUrl, title)
-              }
-              audio.currentTime = time
-              if (audio.paused) audio.play()
-              return
-            }
-            target = target.parentElement
-          }
-        })
-
-        // 章节点击跳转
-        var chapterButtons = document.querySelectorAll('.chapter-seek')
-        chapterButtons.forEach(function (button) {
-          button.addEventListener('click', function () {
-            var time = parseFloat(button.getAttribute('data-time'))
-            if (isNaN(time)) return
-            var audio = document.getElementById('podcast-audio')
-            if (!audio) return
-            var audioUrl = episodePlayBtn && episodePlayBtn.getAttribute('data-audio-url')
-            var isCurrentEpisode = audio.src && audio.src.endsWith(audioUrl || '')
-            if (!isCurrentEpisode && audioUrl && window.playEpisode) {
-              var title = episodePlayBtn.getAttribute('data-episode-title') || ''
-              window.playEpisode(audioUrl, title)
-            }
-            audio.currentTime = time
-            if (audio.paused) audio.play()
-          })
-        })
+        }
       }
 
       setupTranscript()

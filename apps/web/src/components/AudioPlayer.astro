@@ -2,6 +2,7 @@
 import IconLucidePlay from '~icons/lucide/play'
 import IconLucidePause from '~icons/lucide/pause'
 import IconLucideX from '~icons/lucide/x'
+import IconLucideLoader2 from '~icons/lucide/loader-2'
 ---
 
 <div
@@ -9,22 +10,33 @@ import IconLucideX from '~icons/lucide/x'
   class="fixed bottom-0 left-0 right-0 bg-pg/95 backdrop-blur-md border-t border-bd z-50 translate-y-full transition-transform duration-300"
   role="region"
   aria-label="音频播放器"
+  transition:persist="audio-player"
 >
   <div class="max-w-350 mx-auto px-4 py-2.5 flex items-center gap-3">
-    <button id="play-btn" class="w-9 h-9 rounded-full bg-ac text-ac-on flex items-center justify-center shrink-0 hover:bg-ac-h transition-colors" aria-label="播放/暂停">
+    <button id="play-btn" class="w-9 h-9 rounded-full bg-ac text-ac-on flex items-center justify-center shrink-0 hover:bg-ac-h transition-all active:scale-95 disabled:opacity-70" aria-label="播放/暂停">
       <IconLucidePlay id="icon-play" class="w-4 h-4 ml-0.5" />
       <IconLucidePause id="icon-pause" class="w-4 h-4 hidden" />
+      <IconLucideLoader2 id="icon-loading" class="w-4 h-4 hidden animate-spin" />
     </button>
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 mb-1">
         <span class="text-xs font-mono-label text-ac tracking-wider uppercase shrink-0" aria-live="polite">正在播放</span>
-        <span id="player-title" class="text-sm text-tx1 truncate">EP127 — Rust 是否终将取代 C++？</span>
+        <span id="player-title" class="text-sm text-tx1 truncate">加载中...</span>
       </div>
       <div class="flex items-center gap-2">
         <span id="current-time" class="text-xs font-mono-label text-tx4 w-10 shrink-0" aria-label="当前时间">0:00</span>
-        <div id="progress-track" class="flex-1 h-1 bg-bd rounded-full cursor-pointer relative group" role="slider" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
-          <div id="progress-fill" class="h-full bg-ac rounded-full transition-all w-0"></div>
-          <div id="progress-thumb" class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-ac rounded-full opacity-0 group-hover:opacity-100 transition-opacity" style="left: 0%"></div>
+        <div 
+          id="progress-track" 
+          class="flex-1 h-1 bg-bd rounded-full cursor-pointer relative group select-none touch-none" 
+          role="slider" 
+          aria-label="播放进度" 
+          aria-valuemin="0" 
+          aria-valuemax="100" 
+          aria-valuenow="0" 
+          tabindex="0"
+        >
+          <div id="progress-fill" class="h-full bg-ac rounded-full transition-[width] duration-75 w-0 pointer-events-none"></div>
+          <div id="progress-thumb" class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-ac rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="left: 0%"></div>
         </div>
         <span id="total-time" class="text-xs font-mono-label text-tx4 w-10 shrink-0 text-right" aria-label="总时长">0:00</span>
       </div>
