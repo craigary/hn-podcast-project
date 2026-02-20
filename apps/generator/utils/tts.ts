@@ -2,7 +2,7 @@ import { synthesizeSpeech } from './azure-tts'
 import { podcastConfig } from '@hn/config'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import type { SegmentScript } from '../ai/prompts/script'
+import type { SegmentScript, SegmentScriptWithTimeline } from '../ai/prompts/script'
 import { execa } from 'execa'
 import { readdir, writeFile, mkdir, rm } from 'fs/promises'
 
@@ -15,9 +15,17 @@ interface FullScript {
   metadata: {
     date: string
     title: string
+    description: string
     vibe: string
     totalSegments: number
   }
+}
+
+export interface FullScriptWithTimeline {
+  intro: SegmentScriptWithTimeline
+  segments: SegmentScriptWithTimeline[]
+  outro: SegmentScriptWithTimeline
+  metadata: FullScript['metadata']
 }
 
 /**
@@ -27,7 +35,7 @@ export const generatePodcastAudio = async (
   fullScript: FullScript,
   outputFileName: string,
   coverImagePath?: string
-): Promise<string> => {
+): Promise<{ audioPath: string; scriptWithTimeline: FullScriptWithTimeline }> => {
   console.log(`\n🔊 [音频合成] 启动高级音频合成 (Fluent-FFmpeg + 情感 TTS)...`)
   const startTime = performance.now()
 
@@ -90,8 +98,8 @@ export const generatePodcastAudio = async (
   const processSectionVoice = async (
     lines: SegmentScript['lines'],
     prefix: string
-  ): Promise<string[]> => {
-    const paths: string[] = []
+  ): Promise<{ path: string; duration: number }[]> => {
+    const results: { path: string; duration: number }[] = []
     for (const line of lines) {
       const host =
         line.speaker === podcastConfig.hosts.female.name
@@ -104,18 +112,19 @@ export const generatePodcastAudio = async (
         const buffer = await synthesizeSpeech(line.text, host.voice, style)
         const filePath = path.join(tmpDir, `${prefix}_line_${globalLineIndex++}.mp3`)
         await writeFile(filePath, new Uint8Array(buffer))
-        paths.push(filePath)
+        const duration = await getAudioDuration(filePath)
+        results.push({ path: filePath, duration })
       } catch (error) {
         console.error(`  ❌ 合成失败:`, error)
       }
     }
-    return paths
+    return results
   }
 
   console.log('\n  --- 合成 Intro 章节人声 ---')
-  const introFiles = await processSectionVoice(fullScript.intro.lines, 'intro')
+  const introResults = await processSectionVoice(fullScript.intro.lines, 'intro')
 
-  const segmentVoiceFiles: string[][] = []
+  const segmentVoiceResults: { path: string; duration: number }[][] = []
   const transMusicFiles: (MusicAsset | null)[] = []
   const transitionCandidates = await getRandomFiles(
     'assets/transitions',
@@ -140,11 +149,11 @@ export const generatePodcastAudio = async (
 
     console.log(`\n  --- 合成 Segment ${i + 1} 章节人声 ---`)
     const files = await processSectionVoice(fullScript.segments[i]!.lines, `seg_${i}`)
-    segmentVoiceFiles.push(files)
+    segmentVoiceResults.push(files)
   }
 
   console.log('\n  --- 合成 Outro 章节人声 ---')
-  const outroFiles = await processSectionVoice(fullScript.outro.lines, 'outro')
+  const outroResults = await processSectionVoice(fullScript.outro.lines, 'outro')
 
   // --- 4. 章节内人声合并 (Concat) ---
   const concatFiles = async (files: string[], outName: string): Promise<string | null> => {
@@ -173,11 +182,11 @@ export const generatePodcastAudio = async (
   }
 
   console.log('\n  📦 正在预拼接各个章节人声...')
-  const vIntro = await concatFiles(introFiles, 'v_intro.mp3')
+  const vIntro = await concatFiles(introResults.map((r) => r.path), 'v_intro.mp3')
   const vSegs = await Promise.all(
-    segmentVoiceFiles.map((files, i) => concatFiles(files, `v_seg_${i}.mp3`))
+    segmentVoiceResults.map((results, i) => concatFiles(results.map((r) => r.path), `v_seg_${i}.mp3`))
   )
-  const vOutro = await concatFiles(outroFiles, 'v_outro.mp3')
+  const vOutro = await concatFiles(outroResults.map((r) => r.path), 'v_outro.mp3')
 
   // --- 5. 最终混音与全篇拼接 (Filter Complex) ---
   console.log('\n  🎬 正在进行最终全篇混音与渲染...')
@@ -251,6 +260,56 @@ export const generatePodcastAudio = async (
     clips.push({ kind: 'voice', path: vOutro })
   }
 
+  // --- 计算每行台词的绝对时间轴 ---
+  type SectionRef = { section: 'intro' | 'outro' | 'segment'; segIdx?: number }
+  const voiceSectionMap = new Map<string, SectionRef>()
+  if (vIntro) voiceSectionMap.set(vIntro, { section: 'intro' })
+  if (vOutro) voiceSectionMap.set(vOutro, { section: 'outro' })
+  vSegs.forEach((p, i) => { if (p) voiceSectionMap.set(p, { section: 'segment', segIdx: i }) })
+
+  const sectionTimestamps: Map<string, { start: number; end: number }[]> = new Map()
+  let currentTime = 0
+
+  for (const clip of clips) {
+    if (clip.kind === 'silence') {
+      currentTime += clip.duration
+    } else if (clip.kind === 'music') {
+      currentTime += clip.duration
+    } else if (clip.kind === 'voice') {
+      const ref = voiceSectionMap.get(clip.path)
+      let durations: number[] = []
+      if (ref?.section === 'intro') durations = introResults.map((r) => r.duration)
+      else if (ref?.section === 'outro') durations = outroResults.map((r) => r.duration)
+      else if (ref?.section === 'segment' && ref.segIdx !== undefined)
+        durations = segmentVoiceResults[ref.segIdx]?.map((r) => r.duration) ?? []
+
+      const timestamps: { start: number; end: number }[] = []
+      for (const dur of durations) {
+        const start = Math.round(currentTime * 100) / 100
+        const end = Math.round((currentTime + dur) * 100) / 100
+        timestamps.push({ start, end })
+        currentTime += dur
+      }
+      sectionTimestamps.set(clip.path, timestamps)
+    }
+  }
+
+  const addTimeline = (
+    script: SegmentScript,
+    ts: { start: number; end: number }[]
+  ): SegmentScriptWithTimeline => ({
+    lines: script.lines.map((line, i) => ({ ...line, start: ts[i]?.start ?? 0, end: ts[i]?.end ?? 0 })),
+  })
+
+  const scriptWithTimeline: FullScriptWithTimeline = {
+    intro: addTimeline(fullScript.intro, vIntro ? sectionTimestamps.get(vIntro) ?? [] : []),
+    segments: fullScript.segments.map((seg, i) =>
+      addTimeline(seg, vSegs[i] ? sectionTimestamps.get(vSegs[i]!) ?? [] : [])
+    ),
+    outro: addTimeline(fullScript.outro, vOutro ? sectionTimestamps.get(vOutro) ?? [] : []),
+    metadata: fullScript.metadata,
+  }
+
   if (clips.length === 0) {
     throw new Error('No audio clips available for rendering')
   }
@@ -322,7 +381,7 @@ export const generatePodcastAudio = async (
   await rm(tmpDir, { recursive: true })
   console.log(`🧹 已清理临时目录: ${tmpDir}`)
 
-  return finalOutputPath
+  return { audioPath: finalOutputPath, scriptWithTimeline }
 }
 
 /**

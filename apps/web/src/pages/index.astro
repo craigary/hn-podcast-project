@@ -20,10 +20,10 @@ if (!latest) {
   throw new Error('No episodes found in the "episodes" collection. Ensure content files exist and the glob loader base path is correct.')
 }
 
-// Transform showNotes to hnLinks format if hnLinks doesn't exist
-const latestHnLinks = latest.data.hnLinks ?? latest.data.showNotes?.map(note => ({
-  title: note.title,
-  url: note.hnUrl,
+// Transform links to hnLinks format if hnLinks doesn't exist
+const latestHnLinks = latest.data.hnLinks ?? latest.data.links?.map((link: { title: string; hnUrl: string }) => ({
+  title: link.title,
+  url: link.hnUrl,
 })) ?? []
 
 // SEO metadata
@@ -107,7 +107,7 @@ const changelog = entries.map(entry => ({
         )}
 
         <!-- <PollSection options={pollOptions} /> -->
-        <div class="border-t border-bd"></div>
+        <!-- <div class="border-t border-bd"></div> -->
 
         <section>
           <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-4">收听平台</h2>

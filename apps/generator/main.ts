@@ -237,15 +237,19 @@ async function main() {
     },
   }
 
-  // Step 4.5: Save Full Script to R2
-  const scriptKey = `episodes/${date}/script.json`
-  await r2.setItem(scriptKey, JSON.stringify(fullScript, null, 2))
-  console.log(`✅ 完整脚本已保存到 R2: ${scriptKey}`)
-
   // Step 5: Generate Audio
   console.log('\n🎵 开始生成音频...')
   const audioFileName = `episode-${date}.mp3`
-  const audioPath = await generatePodcastAudio(fullScript, audioFileName, coverImagePath)
+  const { audioPath, scriptWithTimeline } = await generatePodcastAudio(
+    fullScript,
+    audioFileName,
+    coverImagePath
+  )
+
+  // Step 5.0: Save Full Script (with timestamps) to R2
+  const scriptKey = `episodes/${date}/script.json`
+  await r2.setItem(scriptKey, JSON.stringify(scriptWithTimeline, null, 2))
+  console.log(`✅ 完整脚本（含时间轴）已保存到 R2: ${scriptKey}`)
 
   // Step 5.1: Upload Audio to R2
   console.log('\n📤 上传音频到 R2...')
@@ -264,8 +268,8 @@ async function main() {
   const r2PublicUrl = process.env.CF_R2_PUBLIC_URL || ''
   const audioUrl = `${r2PublicUrl}/episodes/${date}/audio.mp3`
   const coverImageUrl = `${r2PublicUrl}/episodes/${date}/cover.png`
-  const markdown = convertScriptToMarkdown(
-    fullScript,
+  const markdown = await convertScriptToMarkdown(
+    scriptWithTimeline,
     blueprint,
     processedStories,
     EPISODE_NUMBER,

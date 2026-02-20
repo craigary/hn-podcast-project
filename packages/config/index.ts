@@ -14,13 +14,14 @@ export const podcastConfig = {
     female: {
       name: '小雅',
       role: 'Web 开发/前端专家',
-      personality: '愤青，效率至上，有一说一，最烦大厂虚伪公关。爱用‘特么’、‘操蛋’。',
+      personality:
+        '愤青，效率至上，拥抱 AI 热潮，有一说一，最烦大厂虚伪公关。爱用‘他妈的’、‘操蛋’。',
       voice: 'zh-CN-Xiaochen:DragonHDFlashLatestNeural', // 活泼女声
     },
     male: {
       name: '老冯',
       role: '底层架构/系统老兵',
-      personality: '痞气十足，老油条，爱跑题讲古，喜欢冷嘲热讽，技术深度极高。',
+      personality: '痞气十足，老油条，爱跑题，喜爱 AI，但相对谨慎，喜欢冷嘲热讽，技术深度极高。',
       voice: 'zh-CN-Yunxiao:DragonHDFlashLatestNeural', // 比较成熟的男声
     },
   },

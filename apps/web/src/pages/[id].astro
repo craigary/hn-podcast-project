@@ -8,7 +8,8 @@ import IconSimpleIconsYcombinator from '~icons/simple-icons/ycombinator'
 import { podcastConfig } from '@hn/config'
 
 type Episode = CollectionEntry<'episodes'>
-type ShowNote = NonNullable<Episode['data']['showNotes']>[number]
+type Chapter = NonNullable<Episode['data']['chapters']>[number]
+type Link = NonNullable<Episode['data']['links']>[number]
 type TranscriptLine = NonNullable<Episode['data']['transcript']>[number]
 
 export async function getStaticPaths() {
@@ -20,7 +21,7 @@ export async function getStaticPaths() {
 }
 
 const { episode } = Astro.props as { episode: Episode }
-const { id: epId, title, date, duration, audioUrl, coverImage, showNotes, transcript } = episode.data
+const { id: epId, title, date, duration, audioUrl, coverImage, chapters, links, transcript } = episode.data
 
 // SEO metadata
 const description = episode.data.desc || `收听 ${podcastConfig.podcast.name} 第 ${epId} 期：${title}`
@@ -108,38 +109,87 @@ const nextEp = sorted[currentIndex - 1]
       </div>
     )} -->
 
-    <!-- Show Notes -->
+    <!-- Description -->
     {
-      showNotes && showNotes.length > 0 && (
+      episode.data.desc && (
         <section class="mb-10">
           <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-5">
-            Show Notes
+            About This Episode
           </h2>
-          <div class="space-y-6">
-            {showNotes.map((note: ShowNote) => (
+          <p class="text-base text-tx2 leading-relaxed">
+            {episode.data.desc}
+          </p>
+        </section>
+      )
+    }
+
+    <!-- Chapters -->
+    {
+      chapters && chapters.length > 0 && (
+        <section class="mb-10">
+          <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-5">
+            Chapters
+          </h2>
+          <div class="space-y-4">
+            {chapters.map((chapter: Chapter) => (
+              <article class="border-l-2 border-ac/30 pl-4 hover:border-ac transition-colors">
+                <button
+                  class="chapter-seek text-left w-full group"
+                  data-time={chapter.start}
+                  title="跳转到此章节"
+                >
+                  <div class="flex items-start gap-3 mb-2">
+                    <span class="font-mono-label text-[11px] text-tx4 group-hover:text-ac transition-colors mt-0.5 shrink-0">
+                      {Math.floor(chapter.start / 60).toString().padStart(2, '0')}:{Math.floor(chapter.start % 60).toString().padStart(2, '0')}
+                    </span>
+                    <h3 class="text-tx1 font-medium text-base group-hover:text-ac transition-colors">
+                      {chapter.title}
+                    </h3>
+                  </div>
+                  <p class="text-sm text-tx3 leading-relaxed">{chapter.desc}</p>
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <!-- Links -->
+    {
+      links && links.length > 0 && (
+        <section class="mb-10">
+          <h2 class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-5">
+            Links
+          </h2>
+          <div class="space-y-4">
+            {links.map((link: Link) => (
               <article class="border-l-2 border-ac/30 pl-4 hover:border-ac transition-colors">
                 <a
-                  href={note.url}
+                  href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   class="text-tx1 font-medium text-base hover:text-ac transition-colors no-underline block mb-2"
                 >
-                  {note.title}
+                  {link.title}
                 </a>
-                {note.desc && (
-                  <p class="text-sm text-tx3 leading-relaxed mb-2">{note.desc}</p>
-                )}
                 <div class="flex items-center gap-3 text-xs text-tx4">
                   <a
-                    href={note.hnUrl}
+                    href={link.hnUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     class="hover:text-ac transition-colors no-underline inline-flex items-center gap-1"
-                    aria-label={`在 Hacker News 上查看 ${note.title} 的讨论`}
+                    aria-label={`在 Hacker News 上查看 ${link.title} 的讨论`}
                   >
                     <IconSimpleIconsYcombinator class="w-3 h-3" />
                     HN 讨论
                   </a>
+                  {/* {link.points && (
+                    <>
+                      <span>·</span>
+                      <span>{link.points} points</span>
+                    </>
+                  )} */}
                 </div>
               </article>
             ))}
@@ -163,9 +213,20 @@ const nextEp = sorted[currentIndex - 1]
           </button>
           <div id="transcript-content" class="hidden mt-4 space-y-5 px-1" role="region" aria-label="对话文本">
             {transcript.map((line: TranscriptLine) => (
-              <div>
-                <span class="font-medium text-ac">{line.speaker}:</span>
-                <span class="text-tx2 ml-1">{line.text}</span>
+              <div class="flex gap-2 items-start" data-start={line.start} data-end={line.end}>
+                {line.start !== undefined && (
+                  <button
+                    class="transcript-seek shrink-0 font-mono-label text-[11px] text-tx4 hover:text-ac transition-colors mt-0.5 cursor-pointer"
+                    data-time={line.start}
+                    title="跳转到此处"
+                  >
+                    {Math.floor(line.start / 60).toString().padStart(2, '0')}:{Math.floor(line.start % 60).toString().padStart(2, '0')}
+                  </button>
+                )}
+                <div>
+                  <span class="font-medium text-ac">{line.speaker}:</span>
+                  <span class="text-tx2 ml-1">{line.text}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -242,16 +303,59 @@ const nextEp = sorted[currentIndex - 1]
 
   <script is:inline>
     ;(function () {
-      const btn = document.getElementById('transcript-toggle')
-      const content = document.getElementById('transcript-content')
-      const toggleText = document.getElementById('transcript-toggle-text')
-      const toggleIcon = document.getElementById('transcript-toggle-icon')
+      var btn = document.getElementById('transcript-toggle')
+      var content = document.getElementById('transcript-content')
+      var toggleText = document.getElementById('transcript-toggle-text')
+      var toggleIcon = document.getElementById('transcript-toggle-icon')
       if (!btn || !content || !toggleText || !toggleIcon) return
       btn.addEventListener('click', function () {
-        const isHidden = content.classList.toggle('hidden')
+        var isHidden = content.classList.toggle('hidden')
         btn.setAttribute('aria-expanded', isHidden ? 'false' : 'true')
         toggleText.textContent = isHidden ? '展开对话文本' : '收起对话文本'
         toggleIcon.textContent = isHidden ? ' ▼' : ' ▲'
+      })
+
+      // Transcript seek: click timestamp to jump audio
+      var episodePlayBtn = document.getElementById('episode-play-btn')
+      content.addEventListener('click', function (e) {
+        var target = e.target
+        while (target && target !== content) {
+          if (target.classList && target.classList.contains('transcript-seek')) {
+            var time = parseFloat(target.getAttribute('data-time'))
+            if (isNaN(time)) return
+            var audio = document.getElementById('podcast-audio')
+            if (!audio) return
+            var audioUrl = episodePlayBtn && episodePlayBtn.getAttribute('data-audio-url')
+            var isCurrentEpisode = audio.src && audio.src.endsWith(audioUrl || '')
+            if (!isCurrentEpisode && audioUrl && window.playEpisode) {
+              var title = episodePlayBtn.getAttribute('data-episode-title') || ''
+              window.playEpisode(audioUrl, title)
+            }
+            audio.currentTime = time
+            if (audio.paused) audio.play()
+            return
+          }
+          target = target.parentElement
+        }
+      })
+
+      // Chapter seek: click chapter to jump audio
+      var chapterButtons = document.querySelectorAll('.chapter-seek')
+      chapterButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+          var time = parseFloat(button.getAttribute('data-time'))
+          if (isNaN(time)) return
+          var audio = document.getElementById('podcast-audio')
+          if (!audio) return
+          var audioUrl = episodePlayBtn && episodePlayBtn.getAttribute('data-audio-url')
+          var isCurrentEpisode = audio.src && audio.src.endsWith(audioUrl || '')
+          if (!isCurrentEpisode && audioUrl && window.playEpisode) {
+            var title = episodePlayBtn.getAttribute('data-episode-title') || ''
+            window.playEpisode(audioUrl, title)
+          }
+          audio.currentTime = time
+          if (audio.paused) audio.play()
+        })
       })
     })()
   </script>

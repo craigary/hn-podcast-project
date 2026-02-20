@@ -16,7 +16,7 @@ const { slug, epId, date, title, desc, coverImage } = Astro.props
   href={`/${slug}`}
   class="block overflow-hidden mb-8 relative group cursor-pointer no-underline"
 >
-  <div class="relative aspect-video md:aspect-16/7 overflow-hidden">
+  <div class="relative aspect-4/3 md:aspect-16/7 overflow-hidden">
     <!-- Background Image -->
     {
       coverImage ? (
@@ -42,7 +42,7 @@ const { slug, epId, date, title, desc, coverImage } = Astro.props
     <!-- Text Box - Bottom Right -->
     <div class="absolute bottom-0 right-0 max-w-2xl bg-sf-dim/75 dark:bg-sf/85 backdrop-blur-sm p-4 md:p-6">
       <div class="font-mono-label text-xs tracking-[0.2em] text-tx4 uppercase mb-3">
-        精选 · {date} · EP{epId}
+        最新 · {date} · EP{epId}
       </div>
       <h2 class="font-serif-display text-2xl md:text-3xl lg:text-4xl text-tx1 mb-3 leading-tight" transition:name={`episode-title-${epId}`}>
         {title}

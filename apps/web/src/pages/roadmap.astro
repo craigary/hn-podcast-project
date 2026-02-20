@@ -7,21 +7,34 @@ marked.setOptions({ breaks: true })
 
 const description = `查看 ${podcastConfig.podcast.name} 的更新日志和未来规划，了解我们的产品迭代历程。`
 
+const tagMap = new Map([
+  ['milestone', { label: '里程碑', class: 'bg-purple-500/15 text-purple-500' }],
+  ['feature', { label: '新功能', class: 'bg-green-500/15 text-green-500' }],
+  ['improvement', { label: '优化', class: 'bg-blue-500/15 text-blue-500' }],
+  ['fix', { label: '修复', class: 'bg-orange-500/15 text-orange-500' }],
+  ['announcement', { label: '公告', class: 'bg-ac/15 text-ac' }],
+])
+
 export const entries = [
+  {
+    date: '2月20日, 2026',
+    title: '增加时间线',
+    desc: '优化了提示词，增加对话的对话轮次，时间更长。（我们看看之后的效果如何），在生成的 Markdown 中已经包含了每条新闻的时间戳，方便在播放器中快速跳转，此外，优化了 Shownotes 的格式，使其更清晰易读。',
+    tag: 'milestone',
+    active: true
+  },
   {
     date: '2月18日, 2026',
     title: 'HN 瞎聊正式上线！',
     desc: '经过数天的开发和测试，HN 瞎聊正式上线！欢迎大家收听并挑错。',
-    tag: '里程碑',
-    tagClass: 'bg-purple-500/15 text-purple-500',
+    tag: 'milestone',
     active: true
   },
   {
     date: '2月7日, 2026',
     title: '项目启动',
     desc: '开始规划一档由 AI 驱动的 Hacker News 每日播客。目标：让技术新闻更容易消化，同时保持深度和趣味性。',
-    tag: '里程碑',
-    tagClass: 'bg-ac/15 text-ac'
+    tag: 'announcement',
   }
 ]
 ---
@@ -55,10 +68,10 @@ export const entries = [
                 <span
                   class:list={[
                     'text-xs font-mono-label px-2 py-0.5 rounded-full leading-none whitespace-nowrap',
-                    entry.tagClass
+                    tagMap.get(entry.tag)?.class
                   ]}
                 >
-                  {entry.tag}
+                  {tagMap.get(entry.tag)?.label}
                 </span>
               </div>
               <div class="text-sm text-tx3 leading-relaxed [&_a]:text-ac [&_a]:underline" set:html={marked.parse(entry.desc)} />

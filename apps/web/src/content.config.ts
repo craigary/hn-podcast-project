@@ -12,11 +12,20 @@ const episodes = defineCollection({
     duration: z.string().optional(),
     audioUrl: z.string().optional(),
     coverImage: z.string().optional(),
-    showNotes: z
+    chapters: z
       .array(
         z.object({
           title: z.string(),
-          desc: z.string().optional(),
+          desc: z.string(),
+          start: z.number(),
+          storyIds: z.array(z.number()),
+        })
+      )
+      .optional(),
+    links: z
+      .array(
+        z.object({
+          title: z.string(),
           url: z.string(),
           hnUrl: z.string(),
           points: z.number().optional(),
@@ -28,6 +37,8 @@ const episodes = defineCollection({
         z.object({
           speaker: z.string(),
           text: z.string(),
+          start: z.number().optional(),
+          end: z.number().optional(),
         })
       )
       .optional(),

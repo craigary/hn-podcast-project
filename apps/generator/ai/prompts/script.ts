@@ -15,6 +15,10 @@ export const SegmentScriptSchema = z.object({
 
 export type SegmentScript = z.infer<typeof SegmentScriptSchema>
 
+export type SegmentScriptWithTimeline = {
+  lines: (SegmentScript['lines'][number] & { start: number; end: number })[]
+}
+
 /**
  * 脚本生成提示词：根据 segment 类型和情报生成对话
  */
@@ -24,7 +28,7 @@ export const getScriptPrompt = (
   vibe: string,
   date: string
 ) => `# Role
-你是《HN 瞎聊》播客的首席编剧。你的任务是为两位主播创作自然、生动、有趣的对话脚本。
+你是《${podcastConfig.podcast.name}》播客的首席编剧。你的任务是为两位主播创作自然、生动、有趣的对话脚本。
 
 # 主播人设
 - **${podcastConfig.hosts.female.name}**（女）：${podcastConfig.hosts.female.personality}
@@ -49,8 +53,8 @@ ${getHostDynamicGuidance(hostDynamic)}
    - 适当使用口语化表达（"这玩意儿"、"搞不懂"、"牛逼"）
 
 2. **人设一致**：
-   - ${podcastConfig.hosts.female.name} 要直接、犀利，敢说真话
-   - ${podcastConfig.hosts.male.name} 要老练、爱跑题，技术深度足
+   - **${podcastConfig.hosts.female.name}**（女）：${podcastConfig.hosts.female.personality}
+   - **${podcastConfig.hosts.male.name}**（男）：${podcastConfig.hosts.male.personality}
 
 3. **节奏控制**：
    - 每句话不要太长（20-50字为宜）
@@ -74,9 +78,9 @@ ${getHostDynamicGuidance(hostDynamic)}
 
 # Output
 严格遵守 SegmentScriptSchema 输出 JSON。对话轮次根据环节类型调整：
-- DeepDive: 15-25 轮
-- Resonance: 10-15 轮
-- SideTrack: 8-12 轮
+- DeepDive: 18-25 轮
+- Resonance: 15-20 轮
+- SideTrack: 12-18 轮
 `
 
 function getSegmentTypeGuidance(type: string): string {
@@ -111,7 +115,7 @@ function getHostDynamicGuidance(dynamic: string): string {
  * 开场脚本提示词
  */
 export const getIntroPrompt = (vibe: string, title: string, date: string) => `# Role
-你是《HN 瞎聊》播客的首席编剧。你正在创作本期节目的开场白。
+你是《${podcastConfig.podcast.name}》播客的首席编剧。你正在创作本期节目的开场白。
 
 # 主播人设
 - **${podcastConfig.hosts.female.name}**（女）：${podcastConfig.hosts.female.personality}
@@ -124,7 +128,7 @@ export const getIntroPrompt = (vibe: string, title: string, date: string) => `# 
 
 # 开场要求
 1. **自然切入**：
-   - 从当前的氛围/场景自然开始（不要说"欢迎收听"这种套话）
+   - 从当前的氛围/场景自然开始
    - 可以先聊聊当下的状态，再引入今天的话题
    - 例如：老冯你这边怎么这么吵？别提了，楼上装修...
 
@@ -157,7 +161,7 @@ export const getIntroPrompt = (vibe: string, title: string, date: string) => `# 
  * 结尾脚本提示词
  */
 export const getOutroPrompt = (vibe: string, title: string, date: string) => `# Role
-你是《HN 瞎聊》播客的首席编剧。你正在创作本期节目的结尾。
+你是《${podcastConfig.podcast.name}》播客的首席编剧。你正在创作本期节目的结尾。
 
 # 主播人设
 - **${podcastConfig.hosts.female.name}**（女）：${podcastConfig.hosts.female.personality}
@@ -180,11 +184,11 @@ export const getOutroPrompt = (vibe: string, title: string, date: string) => `# 
    - 不要太正式的告别
 
 3. **RSS 订阅提醒**：
-   - 自然地提醒听众可以用 RSS 客户端订阅播客
+   - 自然地提醒听众可以用泛用型客户端订阅播客
    - 不要生硬地念广告词，要融入对话
-   - 例如：对了，想听下期的话，用你常用的 RSS 阅读器订阅就行
+   - 例如：对了，想听下期的话，用你常用泛用型客户端订阅就行
    - 或者：RSS 订阅一下，更新了就能收到
-   - 强调使用泛用型 RSS 客户端（不是特定平台）
+   - 强调使用泛用型客户端，而不是那些封闭型播客平台。
 
 4. **留个尾巴**：
    - 可以简单提一下"下期见"或"有空再聊"
@@ -196,7 +200,7 @@ export const getOutroPrompt = (vibe: string, title: string, date: string) => `# 
    - 英文专有名词直接使用，不要加括号注释
 
 6. **长度控制**：
-   - 4-6 轮对话即可
+   - 6-8 轮对话即可
    - 简短有力
 
 # Output
