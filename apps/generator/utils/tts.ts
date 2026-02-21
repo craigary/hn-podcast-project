@@ -289,15 +289,7 @@ export const generatePodcastAudio = async (
     // 计算理论总时长（含所有间隔）
     let theoreticalTotal = 0
     results.forEach((r, index) => {
-      // 修正：将时间戳提前 0.1s（即指向前一个静音片段的开始），以优化播放体验
-      // 第一句不提前，因为没有前置静音
-      const offset = index > 0 ? -0.1 : 0
-      const start = Math.round((baseTime + currentTime + offset) * 100) / 100
-      const end = Math.round((baseTime + currentTime + r.duration) * 100) / 100
-      timestamps.push({ start, end })
-
-      // 更新时间：片段时长 + 0.1s 间隔（最后一个片段后无间隔）
-      currentTime += r.duration
+      theoreticalTotal += r.duration
       if (index < results.length - 1) {
         theoreticalTotal += 0.1
       }
@@ -314,15 +306,11 @@ export const generatePodcastAudio = async (
     }
 
     results.forEach((r, index) => {
-      // 修正：将时间戳提前 0.1s（即指向前一个静音片段的开始），以优化播放体验
-      // 第一句不提前，因为没有前置静音
-      const offset = index > 0 ? -0.1 : 0
-
       // 应用缩放比例
       const scaledCurrentTime = currentTime * ratio
       const scaledDuration = r.duration * ratio
 
-      const start = Math.round((baseTime + scaledCurrentTime + offset) * 100) / 100
+      const start = Math.round((baseTime + scaledCurrentTime) * 100) / 100
       const end = Math.round((baseTime + scaledCurrentTime + scaledDuration) * 100) / 100
       timestamps.push({ start, end })
 
