@@ -5,7 +5,8 @@ import { fetchHackerNewsTopStories, processStories } from './utils/hn'
 import { r2 } from './utils/storage/r2'
 import { kv } from './utils/storage/kv'
 import { convertScriptToMarkdown } from './utils/markdown'
-import { generatePodcastAudio } from './utils/tts'
+import { generatePodcastAudio, type FullScriptWithTimeline } from './utils/tts'
+import type { SegmentScript } from './ai/prompts/script'
 import { writeFile, readFile, rm, readdir, mkdir } from 'fs/promises'
 import { join } from 'path'
 
@@ -220,7 +221,7 @@ async function main() {
   })
 
   // Step 4.2: Generate Segment Scripts
-  const segmentScripts = []
+  const segmentScripts: SegmentScript[] = []
 
   for (let i = 0; i < blueprint.segments.length; i++) {
     const segment = blueprint.segments[i]
@@ -256,7 +257,7 @@ async function main() {
 
   // Step 5: Generate Audio (skip in local mode)
   let audioPath: string | undefined
-  let scriptWithTimeline: any
+  let scriptWithTimeline: FullScriptWithTimeline
 
   if (!local) {
     console.log('\n🎵 开始生成音频...')
@@ -285,11 +286,11 @@ async function main() {
     console.log('\n⏭️  本地调试模式：跳过音频生成和 R2 上传')
     // 在本地模式下，创建一个简化的脚本（不含时间轴）
     scriptWithTimeline = {
-      intro: { lines: introScript.lines.map((line: any) => ({ ...line, start: 0, end: 0 })) },
+      intro: { lines: introScript.lines.map((line) => ({ ...line, start: 0, end: 0 })) },
       segments: segmentScripts.map((seg) => ({
-        lines: seg.lines.map((line: any) => ({ ...line, start: 0, end: 0 })),
+        lines: seg.lines.map((line) => ({ ...line, start: 0, end: 0 })),
       })),
-      outro: { lines: outroScript.lines.map((line: any) => ({ ...line, start: 0, end: 0 })) },
+      outro: { lines: outroScript.lines.map((line) => ({ ...line, start: 0, end: 0 })) },
       metadata: fullScript.metadata,
     }
 

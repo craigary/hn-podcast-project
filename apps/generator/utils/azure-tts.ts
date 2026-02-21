@@ -97,14 +97,22 @@ export async function synthesizeSpeech(
 
     const url = `https://${authCache.region}.tts.speech.microsoft.com/cognitiveservices/v1`
 
-    // 简单的文本清洗，防止 XML 注入
-    const cleanText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // 增强的文本清洗，防止 XML 注入和语速异常
+    const cleanText = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;')
+      // 规范化空白字符
+      .replace(/\s+/g, ' ')
+      .trim()
 
     const ssml = `
       <speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" version="1.0" xml:lang="zh-CN">
         <voice name="${voiceName}">
           <mstts:express-as style="${style}" styledegree="1.0" role="default">
-            <prosody rate="+10%" pitch="0%">
+            <prosody rate="0%" pitch="0%">
               ${cleanText}
             </prosody>
           </mstts:express-as>
