@@ -286,8 +286,8 @@ export const generatePodcastAudio = async (
     const timestamps: { start: number; end: number }[] = []
     let currentTime = 0 // 从 0 开始，相对于章节起始位置
 
-    // 直接累加实际时长，不使用缩放
-    // 关键：0.1s 间隔已经在 concat 时物理插入，所以这里只需要累加原始时长 + 0.1
+    // 计算理论总时长（含所有间隔）
+    let theoreticalTotal = 0
     results.forEach((r, index) => {
       // 修正：将时间戳提前 0.1s（即指向前一个静音片段的开始），以优化播放体验
       // 第一句不提前，因为没有前置静音
@@ -299,18 +299,39 @@ export const generatePodcastAudio = async (
       // 更新时间：片段时长 + 0.1s 间隔（最后一个片段后无间隔）
       currentTime += r.duration
       if (index < results.length - 1) {
-        currentTime += 0.1
+        theoreticalTotal += 0.1
       }
     })
 
-    // 验证：计算出的总时长应该与实际时长接近（允许 0.05s 误差）
-    const calculatedTotal = currentTime
-    const diff = Math.abs(actualConcatDuration - calculatedTotal)
-    if (diff > 0.05) {
+    // 计算缩放比例，消除累积误差
+    // 如果实际时长与理论时长差异过大，则按比例缩放时间轴
+    const ratio = theoreticalTotal > 0 ? actualConcatDuration / theoreticalTotal : 1
+
+    if (Math.abs(ratio - 1) > 0.01) {
       console.warn(
-        `⚠️ 时间轴计算警告: 预估=${calculatedTotal.toFixed(2)}s, 实际=${actualConcatDuration.toFixed(2)}s, 差异=${diff.toFixed(3)}s`
+        `⚠️ 时间轴自动修正: 理论=${theoreticalTotal.toFixed(2)}s, 实际=${actualConcatDuration.toFixed(2)}s, 比例=${ratio.toFixed(4)}`
       )
     }
+
+    results.forEach((r, index) => {
+      // 修正：将时间戳提前 0.1s（即指向前一个静音片段的开始），以优化播放体验
+      // 第一句不提前，因为没有前置静音
+      const offset = index > 0 ? -0.1 : 0
+
+      // 应用缩放比例
+      const scaledCurrentTime = currentTime * ratio
+      const scaledDuration = r.duration * ratio
+
+      const start = Math.round((baseTime + scaledCurrentTime + offset) * 100) / 100
+      const end = Math.round((baseTime + scaledCurrentTime + scaledDuration) * 100) / 100
+      timestamps.push({ start, end })
+
+      // 更新时间：片段时长 + 0.1s 间隔
+      currentTime += r.duration
+      if (index < results.length - 1) {
+        currentTime += 0.1
+      }
+    })
 
     return timestamps
   }
