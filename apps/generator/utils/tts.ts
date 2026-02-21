@@ -283,29 +283,31 @@ export const generatePodcastAudio = async (
   ): { start: number; end: number }[] => {
     if (results.length === 0) return []
 
-    // 计算预估总时长（片段时长 + 间隔）
-    const estimatedTotal = results.reduce((sum, r, i) => {
-      return sum + r.duration + (i < results.length - 1 ? 0.1 : 0)
-    }, 0)
-
-    // 计算缩放比例，用实际时长校准预估时长
-    const scale = estimatedTotal > 0 ? actualConcatDuration / estimatedTotal : 1
-
     const timestamps: { start: number; end: number }[] = []
-    let currentTime = baseTime
+    let currentTime = 0 // 从 0 开始，相对于章节起始位置
 
+    // 直接累加实际时长，不使用缩放
+    // 关键：0.1s 间隔已经在 concat 时物理插入，所以这里只需要累加原始时长 + 0.1
     results.forEach((r, index) => {
-      const scaledDuration = r.duration * scale
-      const start = Math.round(currentTime * 100) / 100
-      const end = Math.round((currentTime + scaledDuration) * 100) / 100
+      const start = Math.round((baseTime + currentTime) * 100) / 100
+      const end = Math.round((baseTime + currentTime + r.duration) * 100) / 100
       timestamps.push({ start, end })
 
-      // 更新时间：片段时长 + 间隔（最后一个片段后无间隔）
-      currentTime = end
+      // 更新时间：片段时长 + 0.1s 间隔（最后一个片段后无间隔）
+      currentTime += r.duration
       if (index < results.length - 1) {
-        currentTime += 0.1 * scale
+        currentTime += 0.1
       }
     })
+
+    // 验证：计算出的总时长应该与实际时长接近（允许 0.05s 误差）
+    const calculatedTotal = currentTime
+    const diff = Math.abs(actualConcatDuration - calculatedTotal)
+    if (diff > 0.05) {
+      console.warn(
+        `⚠️ 时间轴计算警告: 预估=${calculatedTotal.toFixed(2)}s, 实际=${actualConcatDuration.toFixed(2)}s, 差异=${diff.toFixed(3)}s`
+      )
+    }
 
     return timestamps
   }
