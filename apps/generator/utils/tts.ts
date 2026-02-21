@@ -261,7 +261,7 @@ export const generatePodcastAudio = async (
   const calculateSectionTimestamps = (
     results: { duration: number }[],
     baseTime: number
-  ): { timestamps: { start: number; end: number }[], totalDuration: number } => {
+  ): { timestamps: { start: number; end: number }[] } => {
     let currentTime = baseTime
     const timestamps: { start: number; end: number }[] = []
 
@@ -279,12 +279,7 @@ export const generatePodcastAudio = async (
       currentTime = end + 0.1
     })
 
-    // 返回的总时长应该是最后一个片段的结束时间减去起始时间
-    // 或者直接返回 currentTime (包含了最后一个 gap，可能有点误差，但在 global mix 中会被 silenceGap 覆盖)
-    // 实际上 Section 的物理时长是 Sum(Duration) + (N-1)*0.1
-    // 我们这里返回最后一个 end 时间作为该 Section 的有效结束点
-    const lastEnd = timestamps.length > 0 ? timestamps[timestamps.length - 1]!.end : baseTime
-    return { timestamps, totalDuration: lastEnd - baseTime }
+    return { timestamps }
   }
 
   // --- 6. 最终混音与全篇拼接 (Filter Complex) ---
@@ -306,6 +301,7 @@ export const generatePodcastAudio = async (
         path: string
         results: { duration: number }[] // 用于计算内部时间轴
         sectionRef: 'intro' | 'outro' | 'segment'
+        actualDuration: number // 实际文件时长
       }
     | {
         kind: 'silence'
@@ -327,11 +323,13 @@ export const generatePodcastAudio = async (
 
   // Intro Voice
   if (vIntro && introResults.length > 0) {
+    const actualDuration = await getAudioDuration(vIntro)
     clips.push({
       kind: 'voice',
       path: vIntro,
       results: introResults,
-      sectionRef: 'intro'
+      sectionRef: 'intro',
+      actualDuration
     })
   }
 
@@ -351,15 +349,18 @@ export const generatePodcastAudio = async (
   }
 
   // Segments
-  activeSegIndices.forEach((segIndex, index) => {
+  for (let index = 0; index < activeSegIndices.length; index++) {
+    const segIndex = activeSegIndices[index]!
     const segmentPath = vSegs[segIndex]
     const results = segmentVoiceResults[segIndex]
     if (segmentPath && results && results.length > 0) {
+      const actualDuration = await getAudioDuration(segmentPath)
       clips.push({
         kind: 'voice',
         path: segmentPath,
         results: results,
-        sectionRef: 'segment'
+        sectionRef: 'segment',
+        actualDuration
       })
     }
     const hasNextAudio = index < activeSegIndices.length - 1 || Boolean(vOutro)
@@ -373,15 +374,17 @@ export const generatePodcastAudio = async (
       })
       clips.push({ kind: 'silence', duration: silenceGap })
     }
-  })
+  }
 
   // Outro Voice
   if (vOutro && outroResults.length > 0) {
+    const actualDuration = await getAudioDuration(vOutro)
     clips.push({
       kind: 'voice',
       path: vOutro,
       results: outroResults,
-      sectionRef: 'outro'
+      sectionRef: 'outro',
+      actualDuration
     })
   }
 
@@ -401,7 +404,7 @@ export const generatePodcastAudio = async (
       globalCurrentTime += clip.duration
     } else if (clip.kind === 'voice') {
       // 计算该段语音内部的准确时间轴，并加上当前的 globalCurrentTime 偏移
-      const { timestamps, totalDuration } = calculateSectionTimestamps(clip.results, globalCurrentTime)
+      const { timestamps } = calculateSectionTimestamps(clip.results, globalCurrentTime)
 
       // 保存时间轴
       if (clip.sectionRef === 'intro') introTimeline = timestamps
@@ -419,12 +422,8 @@ export const generatePodcastAudio = async (
       }
 
       // 更新全局时间
-      // 使用 calculateSectionTimestamps 返回的 duration 还是文件的实际 duration?
-      // 文件的实际 duration 包含最后的 gap 吗？ concatFiles 没有在最后加 gap。
-      // 所以 duration = Sum(Dur) + (N-1)*0.1
-      // calculateSectionTimestamps 计算的 duration 是 lastEnd - start.
-      // 应该是一致的。
-      globalCurrentTime += totalDuration
+      // 使用实际文件时长而不是预估时长，防止漂移
+      globalCurrentTime += clip.actualDuration
     }
   }
 
