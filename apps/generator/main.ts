@@ -28,6 +28,7 @@ function parseArgs() {
       force = true
     } else if (args[i] === '--local' || args[i] === '-l') {
       local = true
+      force = true // 本地模式默认启用 force，允许覆盖文件，方便调试
     }
   }
 

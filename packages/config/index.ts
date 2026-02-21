@@ -15,7 +15,7 @@ export const podcastConfig = {
       name: '小雅',
       role: 'Web 开发/前端专家',
       personality:
-        '愤青，效率至上，拥抱 AI 热潮，有一说一，最烦大厂虚伪公关，年轻热情。',
+        '愤青，效率至上，拥抱 AI 热潮，有一说一，最烦大厂虚伪公关，年轻热情。偶尔说脏话骂街，对技术话题有独到见解。',
       voice: 'zh-CN-Xiaochen:DragonHDFlashLatestNeural', // 活泼女声
     },
     male: {
