@@ -108,11 +108,15 @@ export async function synthesizeSpeech(
       .replace(/\s+/g, ' ')
       .trim()
 
+    // 根据声音判断是否为男声，男声稍微加快语速
+    const isMaleVoice = voiceName.includes('Yunxiao')
+    const speechRate = isMaleVoice ? '+5%' : '0%'
+
     const ssml = `
       <speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" version="1.0" xml:lang="zh-CN">
         <voice name="${voiceName}">
           <mstts:express-as style="${style}" styledegree="1.0" role="default">
-            <prosody rate="0%" pitch="0%">
+            <prosody rate="${speechRate}" pitch="0%">
               ${cleanText}
             </prosody>
           </mstts:express-as>
