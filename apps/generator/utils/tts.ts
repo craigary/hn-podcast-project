@@ -175,6 +175,8 @@ export const generatePodcastAudio = async (
     const concatContent = files.map((f) => `file '${f}'`).join('\n')
     await writeFile(concatListPath, concatContent)
 
+    // 使用重新编码而不是 copy，确保音频完整性，避免截断
+    // 添加 apad 过滤器在每个片段末尾添加短暂静音，防止切断
     await execa('ffmpeg', [
       '-f',
       'concat',
@@ -182,8 +184,14 @@ export const generatePodcastAudio = async (
       '0',
       '-i',
       concatListPath,
-      '-c',
-      'copy',
+      '-af',
+      'apad=pad_dur=0.1',
+      '-ar',
+      '44100',
+      '-ac',
+      '2',
+      '-b:a',
+      '128k',
       '-y',
       outPath,
     ])

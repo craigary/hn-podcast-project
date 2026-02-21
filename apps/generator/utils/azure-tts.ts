@@ -117,7 +117,7 @@ export async function synthesizeSpeech(
         <voice name="${voiceName}">
           <mstts:express-as style="${style}" styledegree="1.0" role="default">
             <prosody rate="${speechRate}" pitch="0%">
-              ${cleanText}
+              ${cleanText}<break time="100ms"/>
             </prosody>
           </mstts:express-as>
         </voice>
