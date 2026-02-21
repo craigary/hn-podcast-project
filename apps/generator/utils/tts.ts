@@ -278,16 +278,13 @@ export const generatePodcastAudio = async (
    */
   const calculateSectionTimestamps = (
     results: { duration: number }[],
-    baseTime: number,
-    actualConcatDuration: number
+    baseTime: number
   ): { start: number; end: number }[] => {
     if (results.length === 0) return []
 
     const timestamps: { start: number; end: number }[] = []
     let currentTime = 0 // 从 0 开始，相对于章节起始位置
 
-    // 计算理论总时长（含所有间隔）
-    let theoreticalTotal = 0
     results.forEach((r, index) => {
       // 修正：将时间戳提前 0.1s（即指向前一个静音片段的开始），以优化播放体验
       // 第一句不提前，因为没有前置静音
@@ -297,36 +294,6 @@ export const generatePodcastAudio = async (
       timestamps.push({ start, end })
 
       // 更新时间：片段时长 + 0.1s 间隔（最后一个片段后无间隔）
-      currentTime += r.duration
-      if (index < results.length - 1) {
-        theoreticalTotal += 0.1
-      }
-    })
-
-    // 计算缩放比例，消除累积误差
-    // 如果实际时长与理论时长差异过大，则按比例缩放时间轴
-    const ratio = theoreticalTotal > 0 ? actualConcatDuration / theoreticalTotal : 1
-
-    if (Math.abs(ratio - 1) > 0.01) {
-      console.warn(
-        `⚠️ 时间轴自动修正: 理论=${theoreticalTotal.toFixed(2)}s, 实际=${actualConcatDuration.toFixed(2)}s, 比例=${ratio.toFixed(4)}`
-      )
-    }
-
-    results.forEach((r, index) => {
-      // 修正：将时间戳提前 0.1s（即指向前一个静音片段的开始），以优化播放体验
-      // 第一句不提前，因为没有前置静音
-      const offset = index > 0 ? -0.1 : 0
-
-      // 应用缩放比例
-      const scaledCurrentTime = currentTime * ratio
-      const scaledDuration = r.duration * ratio
-
-      const start = Math.round((baseTime + scaledCurrentTime + offset) * 100) / 100
-      const end = Math.round((baseTime + scaledCurrentTime + scaledDuration) * 100) / 100
-      timestamps.push({ start, end })
-
-      // 更新时间：片段时长 + 0.1s 间隔
       currentTime += r.duration
       if (index < results.length - 1) {
         currentTime += 0.1
@@ -462,8 +429,7 @@ export const generatePodcastAudio = async (
       // 计算该段语音内部的准确时间轴，并加上当前的 globalCurrentTime 偏移
       const timestamps = calculateSectionTimestamps(
         clip.results,
-        globalCurrentTime,
-        clip.actualDuration
+        globalCurrentTime
       )
 
       // 保存时间轴
