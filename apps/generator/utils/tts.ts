@@ -94,61 +94,71 @@ export const generatePodcastAudio = async (
   const introMusic = await getRandomAssetAndTrim('assets/intro', 'intro_bgm')
 
   // --- 3. 合成语音行 ---
-  let globalLineIndex = 0
   const processSectionVoice = async (
     lines: SegmentScript['lines'],
     prefix: string
   ): Promise<{ path: string; duration: number }[]> => {
-    const results: { path: string; duration: number }[] = []
-    for (const line of lines) {
-      const host =
-        line.speaker === podcastConfig.hosts.female.name
-          ? podcastConfig.hosts.female
-          : podcastConfig.hosts.male
-      const style = 'general' // 先去掉情绪，现在这个太难听了
-      console.log(`  🎙️ [语音合成] ${line.speaker} | 语气: ${style} | 长度: ${line.text.length}字`)
+    const results: ({ path: string; duration: number } | null)[] = []
 
-      try {
-        const buffer = await synthesizeSpeech(line.text, host.voice, style)
-        const filePath = path.join(tmpDir, `${prefix}_line_${globalLineIndex++}.mp3`)
-        await writeFile(filePath, new Uint8Array(buffer))
-        const duration = await getAudioDuration(filePath)
-        results.push({ path: filePath, duration })
-      } catch (error) {
-        console.error(`  ❌ 合成失败:`, error)
-      }
+    // 批量处理语音合成，每次最多 5 条，防止限流
+    const BATCH_SIZE = 5
+    for (let i = 0; i < lines.length; i += BATCH_SIZE) {
+      const chunk = lines.slice(i, i + BATCH_SIZE)
+      console.log(`  🎙️ [语音合成] 正在处理 ${prefix} 批次: ${i} - ${i + chunk.length}...`)
+
+      const chunkResults = await Promise.all(
+        chunk.map(async (line, chunkIdx) => {
+          const index = i + chunkIdx
+          const host =
+            line.speaker === podcastConfig.hosts.female.name
+              ? podcastConfig.hosts.female
+              : podcastConfig.hosts.male
+          const style = 'general'
+
+          try {
+            const buffer = await synthesizeSpeech(line.text, host.voice, style)
+            const filePath = path.join(tmpDir, `${prefix}_line_${index}.mp3`)
+            await writeFile(filePath, new Uint8Array(buffer))
+            const duration = await getAudioDuration(filePath)
+            return { path: filePath, duration }
+          } catch (error) {
+            console.error(`  ❌ 合成失败 (${line.speaker}):`, error)
+            return null
+          }
+        })
+      )
+      results.push(...chunkResults)
     }
-    return results
+
+    return results.filter((r): r is { path: string; duration: number } => r !== null)
   }
 
-  console.log('\n  --- 合成 Intro 章节人声 ---')
-  const introResults = await processSectionVoice(fullScript.intro.lines, 'intro')
-
-  const segmentVoiceResults: { path: string; duration: number }[][] = []
-  const transMusicFiles: (MusicAsset | null)[] = []
   const transitionCandidates = await getRandomFiles(
     'assets/transitions',
     fullScript.segments.length + 1
   )
   const introTransitionPath = transitionCandidates[0] ?? (await getRandomFile('assets/transitions'))
+  const segmentTransitionCandidates = transitionCandidates.slice(1)
+
+  console.log('\n  --- 合成 Intro 章节人声 ---')
+  const introResults = await processSectionVoice(fullScript.intro.lines, 'intro')
+
   const introTransition = introTransitionPath
     ? await trimAsset(introTransitionPath, 'trans_intro')
     : null
-  const segmentTransitionCandidates = transitionCandidates.slice(1)
+
+  const segmentVoiceResults: { path: string; duration: number }[][] = []
+  const transMusicFiles: (MusicAsset | null)[] = []
 
   for (let i = 0; i < fullScript.segments.length; i++) {
-    // 每个 Segment 准备一个独立的转场音效
+    const segment = fullScript.segments[i]!
     const transitionPath =
       segmentTransitionCandidates[i] ?? (await getRandomFile('assets/transitions'))
-    if (transitionPath) {
-      const trimmed = await trimAsset(transitionPath, `trans_${i}`)
-      transMusicFiles.push(trimmed)
-    } else {
-      transMusicFiles.push(null)
-    }
+    const trimmed = transitionPath ? await trimAsset(transitionPath, `trans_${i}`) : null
+    transMusicFiles.push(trimmed)
 
     console.log(`\n  --- 合成 Segment ${i + 1} 章节人声 ---`)
-    const files = await processSectionVoice(fullScript.segments[i]!.lines, `seg_${i}`)
+    const files = await processSectionVoice(segment.lines, `seg_${i}`)
     segmentVoiceResults.push(files)
   }
 
