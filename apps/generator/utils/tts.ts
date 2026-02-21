@@ -29,6 +29,67 @@ export interface FullScriptWithTimeline {
 }
 
 /**
+ * 获取音频时长
+ */
+const getAudioDuration = async (assetPath: string): Promise<number> => {
+  try {
+    const { stdout } = await execa('ffprobe', [
+      '-v',
+      'error',
+      '-show_entries',
+      'format=duration',
+      '-of',
+      'default=noprint_wrappers=1:nokey=1',
+      assetPath,
+    ])
+    const duration = parseFloat(stdout)
+    return duration > 0 ? duration : 0
+  } catch (error) {
+    console.error(`Failed to get duration for ${assetPath}:`, error)
+    return 0
+  }
+}
+
+/**
+ * 批量处理语音合成（已改为顺序处理）
+ */
+export const processSectionVoice = async (
+  lines: SegmentScript['lines'],
+  prefix: string,
+  tmpDir: string,
+  {
+    synthesize = synthesizeSpeech,
+    write = writeFile,
+    getDuration = getAudioDuration,
+    config = podcastConfig,
+  } = {}
+): Promise<{ path: string; duration: number }[]> => {
+  const results: ({ path: string; duration: number } | null)[] = []
+
+  // 改为顺序处理，每次处理 1 条，防止限流
+  for (const [index, line] of lines.entries()) {
+    console.log(`  🎙️ [语音合成] 正在处理 ${prefix} 序号: ${index + 1}/${lines.length}...`)
+
+    const host =
+      line.speaker === config.hosts.female.name ? config.hosts.female : config.hosts.male
+    const style = 'general'
+
+    try {
+      const buffer = await synthesize(line.text, host.voice, style)
+      const filePath = path.join(tmpDir, `${prefix}_line_${index}.mp3`)
+      await write(filePath, new Uint8Array(buffer))
+      const duration = await getDuration(filePath)
+      results.push({ path: filePath, duration })
+    } catch (error) {
+      console.error(`  ❌ 合成失败 (${line.speaker}):`, error)
+      results.push(null)
+    }
+  }
+
+  return results.filter((r): r is { path: string; duration: number } => r !== null)
+}
+
+/**
  * 将结构化脚本转换为带 BGM 和转场音效的完整播客音频
  */
 export const generatePodcastAudio = async (
@@ -47,25 +108,6 @@ export const generatePodcastAudio = async (
   type MusicAsset = {
     path: string
     duration: number
-  }
-
-  const getAudioDuration = async (assetPath: string): Promise<number> => {
-    try {
-      const { stdout } = await execa('ffprobe', [
-        '-v',
-        'error',
-        '-show_entries',
-        'format=duration',
-        '-of',
-        'default=noprint_wrappers=1:nokey=1',
-        assetPath,
-      ])
-      const duration = parseFloat(stdout)
-      return duration > 0 ? duration : 0
-    } catch (error) {
-      console.error(`Failed to get duration for ${assetPath}:`, error)
-      return 0
-    }
   }
 
   const trimAsset = async (assetPath: string, name: string): Promise<MusicAsset> => {
@@ -94,45 +136,6 @@ export const generatePodcastAudio = async (
   const introMusic = await getRandomAssetAndTrim('assets/intro', 'intro_bgm')
 
   // --- 3. 合成语音行 ---
-  const processSectionVoice = async (
-    lines: SegmentScript['lines'],
-    prefix: string
-  ): Promise<{ path: string; duration: number }[]> => {
-    const results: ({ path: string; duration: number } | null)[] = []
-
-    // 批量处理语音合成，每次最多 3 条，防止限流
-    const BATCH_SIZE = 3
-    for (let i = 0; i < lines.length; i += BATCH_SIZE) {
-      const chunk = lines.slice(i, i + BATCH_SIZE)
-      console.log(`  🎙️ [语音合成] 正在处理 ${prefix} 批次: ${i} - ${i + chunk.length}...`)
-
-      const chunkResults = await Promise.all(
-        chunk.map(async (line, chunkIdx) => {
-          const index = i + chunkIdx
-          const host =
-            line.speaker === podcastConfig.hosts.female.name
-              ? podcastConfig.hosts.female
-              : podcastConfig.hosts.male
-          const style = 'general'
-
-          try {
-            const buffer = await synthesizeSpeech(line.text, host.voice, style)
-            const filePath = path.join(tmpDir, `${prefix}_line_${index}.mp3`)
-            await writeFile(filePath, new Uint8Array(buffer))
-            const duration = await getAudioDuration(filePath)
-            return { path: filePath, duration }
-          } catch (error) {
-            console.error(`  ❌ 合成失败 (${line.speaker}):`, error)
-            return null
-          }
-        })
-      )
-      results.push(...chunkResults)
-    }
-
-    return results.filter((r): r is { path: string; duration: number } => r !== null)
-  }
-
   const transitionCandidates = await getRandomFiles(
     'assets/transitions',
     fullScript.segments.length + 1
@@ -141,7 +144,7 @@ export const generatePodcastAudio = async (
   const segmentTransitionCandidates = transitionCandidates.slice(1)
 
   console.log('\n  --- 合成 Intro 章节人声 ---')
-  const introResults = await processSectionVoice(fullScript.intro.lines, 'intro')
+  const introResults = await processSectionVoice(fullScript.intro.lines, 'intro', tmpDir)
 
   const introTransition = introTransitionPath
     ? await trimAsset(introTransitionPath, 'trans_intro')
@@ -158,12 +161,12 @@ export const generatePodcastAudio = async (
     transMusicFiles.push(trimmed)
 
     console.log(`\n  --- 合成 Segment ${i + 1} 章节人声 ---`)
-    const files = await processSectionVoice(segment.lines, `seg_${i}`)
+    const files = await processSectionVoice(segment.lines, `seg_${i}`, tmpDir)
     segmentVoiceResults.push(files)
   }
 
   console.log('\n  --- 合成 Outro 章节人声 ---')
-  const outroResults = await processSectionVoice(fullScript.outro.lines, 'outro')
+  const outroResults = await processSectionVoice(fullScript.outro.lines, 'outro', tmpDir)
 
   // --- 4. 章节内人声合并 (Concat) ---
   const concatFiles = async (files: string[], outName: string): Promise<string | null> => {
