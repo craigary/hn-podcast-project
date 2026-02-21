@@ -51,7 +51,28 @@ const getAudioDuration = async (assetPath: string): Promise<number> => {
 }
 
 /**
- * 批量处理语音合成（已改为顺序处理）
+ * 创建静音文件
+ */
+const createSilenceFile = async (duration: number, outputDir: string): Promise<string> => {
+  const outputPath = path.join(outputDir, `silence_${duration}s.mp3`)
+  // 检查是否已存在，避免重复生成
+  try {
+    await execa('ffmpeg', [
+      '-f', 'lavfi',
+      '-i', `anullsrc=r=44100:cl=stereo:d=${duration}`,
+      '-q:a', '9',
+      '-y',
+      outputPath
+    ])
+    return outputPath
+  } catch (error) {
+    console.error(`Failed to create silence file:`, error)
+    throw error
+  }
+}
+
+/**
+ * 批量处理语音合成（顺序处理）
  */
 export const processSectionVoice = async (
   lines: SegmentScript['lines'],
@@ -132,6 +153,9 @@ export const generatePodcastAudio = async (
     return await trimAsset(assetPath, name)
   }
 
+  // 生成 0.1s 静音文件，用于语句间隔
+  const silenceGapFile = await createSilenceFile(0.1, tmpDir)
+
   // --- 2. 准备开场音乐 ---
   const introMusic = await getRandomAssetAndTrim('assets/intro', 'intro_bgm')
 
@@ -169,32 +193,38 @@ export const generatePodcastAudio = async (
   const outroResults = await processSectionVoice(fullScript.outro.lines, 'outro', tmpDir)
 
   // --- 4. 章节内人声合并 (Concat) ---
-  const concatFiles = async (files: string[], outName: string): Promise<string | null> => {
+  const concatFiles = async (files: string[], outName: string, gapFile?: string): Promise<string | null> => {
     if (files.length === 0) return null
     const outPath = path.join(tmpDir, outName)
 
     // 创建 concat 文件列表
     const concatListPath = path.join(tmpDir, `${outName}.txt`)
-    const concatContent = files.map((f) => `file '${f}'`).join('\n')
+    let concatContent = ''
+
+    if (gapFile && files.length > 1) {
+      const lines: string[] = []
+      files.forEach((f, i) => {
+        lines.push(`file '${f}'`)
+        // 在除了最后一个文件之外的所有文件后添加静音
+        if (i < files.length - 1) {
+          lines.push(`file '${gapFile}'`)
+        }
+      })
+      concatContent = lines.join('\n')
+    } else {
+      concatContent = files.map((f) => `file '${f}'`).join('\n')
+    }
+
     await writeFile(concatListPath, concatContent)
 
-    // 使用重新编码而不是 copy，确保音频完整性，避免截断
-    // 添加 apad 过滤器在每个片段末尾添加短暂静音，防止切断
+    // 重新编码合并，不再使用 apad
     await execa('ffmpeg', [
-      '-f',
-      'concat',
-      '-safe',
-      '0',
-      '-i',
-      concatListPath,
-      '-af',
-      'apad=pad_dur=0.1',
-      '-ar',
-      '44100',
-      '-ac',
-      '2',
-      '-b:a',
-      '128k',
+      '-f', 'concat',
+      '-safe', '0',
+      '-i', concatListPath,
+      '-ar', '44100',
+      '-ac', '2',
+      '-b:a', '128k',
       '-y',
       outPath,
     ])
@@ -203,39 +233,89 @@ export const generatePodcastAudio = async (
   }
 
   console.log('\n  📦 正在预拼接各个章节人声...')
+
+  // 拼接时插入 0.1s 静音
   const vIntro = await concatFiles(
     introResults.map((r) => r.path),
-    'v_intro.mp3'
+    'v_intro.mp3',
+    silenceGapFile
   )
   const vSegs = await Promise.all(
     segmentVoiceResults.map((results, i) =>
       concatFiles(
         results.map((r) => r.path),
-        `v_seg_${i}.mp3`
+        `v_seg_${i}.mp3`,
+        silenceGapFile
       )
     )
   )
   const vOutro = await concatFiles(
     outroResults.map((r) => r.path),
-    'v_outro.mp3'
+    'v_outro.mp3',
+    silenceGapFile
   )
 
-  // 重新获取拼接后文件的实际时长（因为添加了 apad 和 break，时长会增加）
-  const getActualDuration = async (filePath: string | null): Promise<number> => {
-    if (!filePath) return 0
-    return await getAudioDuration(filePath)
+  // --- 5. 计算时间轴 (Timeline Calculation) ---
+  // 使用叠加法计算初始时间轴，然后根据实际文件总时长进行线性缩放（Linear Scaling），
+  // 以消除章节内部因 MP3 拼接误差导致的累积漂移。
+
+  const calculateSectionTimestamps = (
+    results: { duration: number }[],
+    baseTime: number,
+    actualTotalDuration: number
+  ): { timestamps: { start: number; end: number }[] } => {
+    // 1. 计算理论上的总时长（Sum of parts + gaps）
+    let expectedTotalDuration = 0
+    results.forEach((r, i) => {
+      expectedTotalDuration += r.duration
+      if (i < results.length - 1) {
+        expectedTotalDuration += 0.1 // Gap duration
+      }
+    })
+
+    // 2. 计算缩放因子 (Scale Factor)
+    // 如果理论时长为 0（防除零），则因子为 1
+    const scaleFactor =
+      expectedTotalDuration > 0 ? actualTotalDuration / expectedTotalDuration : 1
+
+    console.log(
+      `  ⏱️ [时间轴校准] 理论时长: ${expectedTotalDuration.toFixed(3)}s, 实际时长: ${actualTotalDuration.toFixed(3)}s, 缩放因子: ${scaleFactor.toFixed(6)}`
+    )
+
+    // 3. 计算并应用缩放
+    let currentLocalTime = 0
+    const timestamps: { start: number; end: number }[] = []
+
+    results.forEach((r, index) => {
+      // 原始（理论）起止时间
+      const rawStart = currentLocalTime
+      const rawEnd = rawStart + r.duration
+
+      // 缩放后的起止时间（相对于本章节开头 0.0）
+      // 使用 number 原生精度计算，最后再保留小数位，减少中间误差
+      const scaledStart = rawStart * scaleFactor
+      const scaledEnd = rawEnd * scaleFactor
+
+      // 加上 baseTime（章节起始时间）并保留 2 位小数
+      const finalStart = Math.round((baseTime + scaledStart) * 100) / 100
+      const finalEnd = Math.round((baseTime + scaledEnd) * 100) / 100
+
+      timestamps.push({ start: finalStart, end: finalEnd })
+
+      // 推进理论时间：当前片段时长 + 0.1s 间隔
+      currentLocalTime = rawEnd + 0.1
+    })
+
+    return { timestamps }
   }
 
-  const vIntroDuration = await getActualDuration(vIntro)
-  const vSegsDurations = await Promise.all(vSegs.map((seg) => getActualDuration(seg)))
-  const vOutroDuration = await getActualDuration(vOutro)
-
-  // --- 5. 最终混音与全篇拼接 (Filter Complex) ---
+  // --- 6. 最终混音与全篇拼接 (Filter Complex) ---
   console.log('\n  🎬 正在进行最终全篇混音与渲染...')
 
   const { fadeDuration, silenceGap } = podcastConfig.audio
   const musicVolume = 0.25
 
+  // 构建播放列表 (Clips)
   type Clip =
     | {
         kind: 'music'
@@ -246,6 +326,9 @@ export const generatePodcastAudio = async (
     | {
         kind: 'voice'
         path: string
+        results: { duration: number }[] // 用于计算内部时间轴
+        sectionRef: 'intro' | 'outro' | 'segment'
+        actualDuration: number // 实际文件时长
       }
     | {
         kind: 'silence'
@@ -253,19 +336,31 @@ export const generatePodcastAudio = async (
       }
 
   const clips: Clip[] = []
+
+  // Intro Music
   if (introMusic) {
     clips.push({
       kind: 'music',
       path: introMusic.path,
       duration: introMusic.duration,
-      fadeIn: true,
+      fadeIn: false, // 禁用淡入
     })
     clips.push({ kind: 'silence', duration: silenceGap })
   }
-  if (vIntro) {
-    clips.push({ kind: 'voice', path: vIntro })
+
+  // Intro Voice
+  if (vIntro && introResults.length > 0) {
+    const actualDuration = await getAudioDuration(vIntro)
+    clips.push({
+      kind: 'voice',
+      path: vIntro,
+      results: introResults,
+      sectionRef: 'intro',
+      actualDuration
+    })
   }
 
+  // Intro Transition
   const activeSegIndices = vSegs
     .map((seg, index) => (seg ? index : null))
     .filter((index): index is number => index !== null)
@@ -275,15 +370,25 @@ export const generatePodcastAudio = async (
       kind: 'music',
       path: introTransition.path,
       duration: introTransition.duration,
-      fadeIn: true,
+      fadeIn: false,
     })
     clips.push({ kind: 'silence', duration: silenceGap })
   }
 
-  activeSegIndices.forEach((segIndex, index) => {
+  // Segments
+  for (let index = 0; index < activeSegIndices.length; index++) {
+    const segIndex = activeSegIndices[index]!
     const segmentPath = vSegs[segIndex]
-    if (segmentPath) {
-      clips.push({ kind: 'voice', path: segmentPath })
+    const results = segmentVoiceResults[segIndex]
+    if (segmentPath && results && results.length > 0) {
+      const actualDuration = await getAudioDuration(segmentPath)
+      clips.push({
+        kind: 'voice',
+        path: segmentPath,
+        results: results,
+        sectionRef: 'segment',
+        actualDuration
+      })
     }
     const hasNextAudio = index < activeSegIndices.length - 1 || Boolean(vOutro)
     const transitionPath = transMusicFiles[segIndex]
@@ -292,74 +397,68 @@ export const generatePodcastAudio = async (
         kind: 'music',
         path: transitionPath.path,
         duration: transitionPath.duration,
-        fadeIn: true,
+        fadeIn: false,
       })
       clips.push({ kind: 'silence', duration: silenceGap })
     }
-  })
-
-  if (vOutro) {
-    clips.push({ kind: 'voice', path: vOutro })
   }
 
-  // --- 计算每行台词的绝对时间轴 ---
-  type SectionRef = { section: 'intro' | 'outro' | 'segment'; segIdx?: number }
-  const voiceSectionMap = new Map<string, SectionRef>()
-  if (vIntro) voiceSectionMap.set(vIntro, { section: 'intro' })
-  if (vOutro) voiceSectionMap.set(vOutro, { section: 'outro' })
-  vSegs.forEach((p, i) => {
-    if (p) voiceSectionMap.set(p, { section: 'segment', segIdx: i })
-  })
+  // Outro Voice
+  if (vOutro && outroResults.length > 0) {
+    const actualDuration = await getAudioDuration(vOutro)
+    clips.push({
+      kind: 'voice',
+      path: vOutro,
+      results: outroResults,
+      sectionRef: 'outro',
+      actualDuration
+    })
+  }
 
-  const sectionTimestamps: Map<string, { start: number; end: number }[]> = new Map()
-  let currentTime = 0
+  // --- 生成最终时间轴和 FFmpeg 输入 ---
+  let globalCurrentTime = 0
+  const finalTimelines: Map<string, { start: number; end: number }[]> = new Map()
+  let introTimeline: { start: number; end: number }[] = []
+  let outroTimeline: { start: number; end: number }[] = []
+  const segmentTimelines: { start: number; end: number }[][] = new Array(fullScript.segments.length).fill([])
 
+  // 遍历 clips 计算时间轴
+  // 注意：这里的 currentTime 是累加的
   for (const clip of clips) {
     if (clip.kind === 'silence') {
-      currentTime += clip.duration
+      globalCurrentTime += clip.duration
     } else if (clip.kind === 'music') {
-      currentTime += clip.duration
+      globalCurrentTime += clip.duration
     } else if (clip.kind === 'voice') {
-      const ref = voiceSectionMap.get(clip.path)
+      // 计算该段语音内部的准确时间轴，并进行线性缩放校准
+      const { timestamps } = calculateSectionTimestamps(
+        clip.results,
+        globalCurrentTime,
+        clip.actualDuration
+      )
 
-      // 使用拼接后文件的实际时长，而不是原始片段时长之和
-      let totalDuration = 0
-      let lineCount = 0
-      if (ref?.section === 'intro') {
-        totalDuration = vIntroDuration
-        lineCount = introResults.length
-      } else if (ref?.section === 'outro') {
-        totalDuration = vOutroDuration
-        lineCount = outroResults.length
-      } else if (ref?.section === 'segment' && ref.segIdx !== undefined) {
-        totalDuration = vSegsDurations[ref.segIdx] ?? 0
-        lineCount = segmentVoiceResults[ref.segIdx]?.length ?? 0
-      }
-
-      // 按比例分配时间给每一行（保持原始比例）
-      const timestamps: { start: number; end: number }[] = []
-      if (lineCount > 0 && totalDuration > 0) {
-        let originalDurations: number[] = []
-        if (ref?.section === 'intro') originalDurations = introResults.map((r) => r.duration)
-        else if (ref?.section === 'outro') originalDurations = outroResults.map((r) => r.duration)
-        else if (ref?.section === 'segment' && ref.segIdx !== undefined)
-          originalDurations = segmentVoiceResults[ref.segIdx]?.map((r) => r.duration) ?? []
-
-        const originalTotal = originalDurations.reduce((sum, d) => sum + d, 0)
-        const scaleFactor = originalTotal > 0 ? totalDuration / originalTotal : 1
-
-        for (const originalDur of originalDurations) {
-          const scaledDur = originalDur * scaleFactor
-          const start = Math.round(currentTime * 100) / 100
-          const end = Math.round((currentTime + scaledDur) * 100) / 100
-          timestamps.push({ start, end })
-          currentTime += scaledDur
+      // 保存时间轴
+      if (clip.sectionRef === 'intro') introTimeline = timestamps
+      else if (clip.sectionRef === 'outro') outroTimeline = timestamps
+      else if (clip.sectionRef === 'segment') {
+        // 找到对应的 segment index
+        // 这里需要反查 segment index，有点麻烦，可以改进 Clip 结构
+        // 简单处理：我们按顺序遍历 segments，所以可以通过比较 path 或者 results 来匹配
+        // 但这里我们知道 clips 的顺序，所以可以直接存储
+        // 更稳妥的方式是在 Clip 中存 index，这里简化处理，假设 segmentPath 唯一
+        const segIdx = vSegs.indexOf(clip.path)
+        if (segIdx !== -1) {
+            segmentTimelines[segIdx] = timestamps
         }
       }
-      sectionTimestamps.set(clip.path, timestamps)
+
+      // 更新全局时间
+      // 使用实际文件时长而不是预估时长，防止漂移
+      globalCurrentTime += clip.actualDuration
     }
   }
 
+  // 更新 FullScriptWithTimeline
   const addTimeline = (
     script: SegmentScript,
     ts: { start: number; end: number }[]
@@ -372,11 +471,11 @@ export const generatePodcastAudio = async (
   })
 
   const scriptWithTimeline: FullScriptWithTimeline = {
-    intro: addTimeline(fullScript.intro, vIntro ? (sectionTimestamps.get(vIntro) ?? []) : []),
+    intro: addTimeline(fullScript.intro, introTimeline),
     segments: fullScript.segments.map((seg, i) =>
-      addTimeline(seg, vSegs[i] ? (sectionTimestamps.get(vSegs[i]!) ?? []) : [])
+      addTimeline(seg, segmentTimelines[i] || [])
     ),
-    outro: addTimeline(fullScript.outro, vOutro ? (sectionTimestamps.get(vOutro) ?? []) : []),
+    outro: addTimeline(fullScript.outro, outroTimeline),
     metadata: fullScript.metadata,
   }
 
@@ -384,6 +483,7 @@ export const generatePodcastAudio = async (
     throw new Error('No audio clips available for rendering')
   }
 
+  // --- 构建 FFmpeg 命令 ---
   let filterComplex = ''
   let inputIdx = 0
   const concatInputs: string[] = []
@@ -400,9 +500,10 @@ export const generatePodcastAudio = async (
       inputIdx += 1
       if (clip.kind === 'music') {
         const fadeOutStart = Math.max(clip.duration - fadeDuration, 0)
+        // 移除淡入，保留淡出
         const filters = [
           `atrim=0:${clip.duration}`,
-          `afade=t=in:st=0:d=${fadeDuration}`,
+          // `afade=t=in:st=0:d=${fadeDuration}`, // 已移除
           `afade=t=out:st=${fadeOutStart}:d=${fadeDuration}`,
           `volume=${musicVolume}`,
           audioFormat,
