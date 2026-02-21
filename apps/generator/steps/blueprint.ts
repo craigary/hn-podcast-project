@@ -5,7 +5,7 @@ import { BlueprintSchema, getBlueprintPrompt } from '../ai/prompts/blueprint'
 import { ProcessedStory } from '../types'
 import { kv } from '../utils/storage/kv'
 import { cerebras } from '../ai/cerebras'
-import pangu from 'pangu'
+import { processText } from '../utils/text'
 
 export const generateBlueprint = async ({
   allStories,
@@ -36,9 +36,9 @@ export const generateBlueprint = async ({
       prompt: `这是今天的候选情报列表：\n${JSON.stringify(candidates)}`,
     })
 
-    // 使用 pangu 处理中英文空格
-    output.episode_overview.title = pangu.spacingText(output.episode_overview.title)
-    output.episode_overview.description = pangu.spacingText(output.episode_overview.description)
+    // 文本后处理：引号转换 + pangu 空格
+    output.episode_overview.title = processText(output.episode_overview.title)
+    output.episode_overview.description = processText(output.episode_overview.description)
 
     await kv.setItem(cacheKey, JSON.stringify(output), {
       expirationTtl: 604_800,
