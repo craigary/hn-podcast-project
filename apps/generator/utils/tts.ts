@@ -100,8 +100,8 @@ export const generatePodcastAudio = async (
   ): Promise<{ path: string; duration: number }[]> => {
     const results: ({ path: string; duration: number } | null)[] = []
 
-    // 批量处理语音合成，每次最多 5 条，防止限流
-    const BATCH_SIZE = 5
+    // 批量处理语音合成，每次最多 3 条，防止限流
+    const BATCH_SIZE = 3
     for (let i = 0; i < lines.length; i += BATCH_SIZE) {
       const chunk = lines.slice(i, i + BATCH_SIZE)
       console.log(`  🎙️ [语音合成] 正在处理 ${prefix} 批次: ${i} - ${i + chunk.length}...`)

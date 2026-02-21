@@ -86,7 +86,7 @@ export async function synthesizeSpeech(
   text: string,
   voiceName: string,
   style: string = 'general',
-  retries = 2
+  retries = 5
 ): Promise<Buffer> {
   try {
     // 1. 检查 Token 是否过期 (提前一分钟更新)
