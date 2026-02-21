@@ -75,15 +75,28 @@ ${content ? content : '(无法获取原始内容)'}
     )
     .join('\n---\n')
 
+  const segmentCreativeBrief = `
+[本环节创作意图]
+- 核心命题: ${segment.narrative_goal}
+- 拉扯问题: ${segment.tension_question}
+- 生活细节锚点: ${segment.lived_detail}
+- 观点转折: ${segment.turn_point}
+`
+
   const prompt = `请为以下故事创作对话脚本：
+
+${segmentCreativeBrief}
 
 ${storiesContext}
 
 注意：
 - 本期节目标题：${episodeOverview.title}
 - 本环节是第 ${segmentIndex + 1} 个环节
+- 请在前 6 轮内自然带出「生活细节锚点」
+- 至少完成一次“抛问题 -> 举例 -> 反驳/补充 -> 小结”的推进
 - 要自然地引用故事中的关键信息和犀利评论
-- 保持人设一致，对话要生动有趣`
+- 保持人设一致，对话要生动有趣
+- 避免模板句和重复口头禅`
 
   console.log('上下文提示词长度：', prompt.length)
 

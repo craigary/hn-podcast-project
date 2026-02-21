@@ -18,6 +18,10 @@ export const BlueprintSchema = z.object({
       host_dynamic: z
         .enum(['debate', 'aligned', 'contrarian', 'riff'])
         .describe('两位主播在本环节的互动模式（对立/一致/唱反调/发散）'),
+      narrative_goal: z.string().describe('本环节要推进的核心命题（1 句话）'),
+      tension_question: z.string().describe('本环节的关键拉扯问题（1 句话）'),
+      lived_detail: z.string().describe('可被说出来的生活细节锚点（具体到动作/声音/物件）'),
+      turn_point: z.string().describe('本环节中后段的观点转折点（1 句话）'),
     })
   ),
 })
@@ -32,7 +36,7 @@ export const getBlueprintPrompt = (date: string) => `# Role
 【当前时间】：${date}。
 
 # Task
-请将提供的 HN 情报（Intel）编排成一份跌宕起伏的节目蓝图。
+请将提供的 HN 情报（Intel）编排成一份有节奏、有冲突、有人味的节目蓝图。
 
 # Strategy
 1. **播客简介 (Description)**：
@@ -46,7 +50,7 @@ export const getBlueprintPrompt = (date: string) => `# Role
 
 2. **生活化背景 (Vibe - 追求新鲜感)**：
    - **目标**：为本期节目设定一个独特、生动且具体的生活切片。
-   - **创意方向建议 (请从不要局限在下面的示例)**：
+   - **创意方向建议 (请不要局限在下面的示例)**：
      - *物理环境*：窗外的暴雨声、邻居装修的电钻声、深夜办公室的电流声...
      - *社交遭遇*：刚结束一场马拉松式的无聊会议、被猎头莫名其妙地骚扰、外卖送错了...
      - *技术折腾*：正在给家里的服务器重新布线、沉迷于配置一个新的终端工具、试图在树莓派上跑大模型...
@@ -55,7 +59,9 @@ export const getBlueprintPrompt = (date: string) => `# Role
      - "${podcastConfig.hosts.male.name} 正在一边录音一边给服务器拧螺丝，气喘吁吁"
      - "${podcastConfig.hosts.female.name} 刚被一个神逻辑的产品经理气笑，正在平复心情"
 
-3. **内容编排**：从候选列表中挑选 5-6 个最具讨论价值的话题。
+3. **内容编排**：
+   - 从候选列表中挑选 5-6 个最具讨论价值的话题。
+   - 整体节奏要形成弧线：先拉开冲突，再深入分析，最后给一点回味或发散。
 
 4. **环节类型 (Segment Types - 决定时长)**：
    - **DeepDive**：深度剖析（长）。探讨技术背后的权衡与哲学。
@@ -68,6 +74,15 @@ export const getBlueprintPrompt = (date: string) => `# Role
    - **contrarian**: 联手质疑主流观点。
    - **riff**: 轻松发散。
 
+6. **每个环节都要补全 4 个细节字段（用于后续写对话）**：
+   - narrative_goal：这一段到底想推进什么命题。
+   - tension_question：两位主播围绕什么问题拉扯。
+   - lived_detail：一个能自然说出口的生活细节（例如「咖啡凉了」「风扇噪音像飞机起飞」）。
+   - turn_point：中后段观点如何转一下（不是硬拐弯）。
+
 # Constraints
 - 必须包含一个 SideTrack 环节，保持节奏的多样性。
+- 相邻三个环节里，host_dynamic 不能完全相同。
+- lived_detail 必须具体可感知，禁止空泛表达（例如「技术变化很快」）。
+- 严格使用候选故事里的 id，不要虚构 story id。
 - 严格遵守 BlueprintSchema 输出 JSON。`
