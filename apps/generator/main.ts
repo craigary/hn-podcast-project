@@ -15,6 +15,7 @@ function parseArgs() {
   let episode: number | undefined
   let date: string | undefined
   let force = false
+  let local = false
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--episode' && args[i + 1]) {
@@ -25,10 +26,12 @@ function parseArgs() {
       i++
     } else if (args[i] === '--force' || args[i] === '-f') {
       force = true
+    } else if (args[i] === '--local' || args[i] === '-l') {
+      local = true
     }
   }
 
-  return { episode, date, force }
+  return { episode, date, force, local }
 }
 
 // 获取最新的期数（优先从文件系统，KV 作为备用）
@@ -118,7 +121,7 @@ function getHackerNewsDate(): string {
 // 主函数
 async function main() {
   // 解析参数
-  const { episode: argEpisode, date: argDate, force } = parseArgs()
+  const { episode: argEpisode, date: argDate, force, local } = parseArgs()
 
   // 获取文件系统中的最新期数
   const latestEpisode = await getLatestEpisodeNumber()
@@ -159,6 +162,11 @@ async function main() {
     console.log(`${argDate ? '✓ 手动指定日期' : '✓ 使用 Hacker News 时区日期（昨天）'}\n`)
   }
 
+  // 本地调试模式提示
+  if (local) {
+    console.log(`🔧 本地调试模式：跳过 TTS 和 R2 上传，仅生成脚本和图片\n`)
+  }
+
   const rawStories = await fetchHackerNewsTopStories(date)
   const processedStories = await processStories(rawStories)
 
@@ -168,10 +176,12 @@ async function main() {
     date,
   })
 
-  // Step 2.1 Save Blueprint to R2
+  // Step 2.1 Save Blueprint to R2 (skip in local mode)
   const blueprintKey = `episodes/${date}/blueprint.json`
-  await r2.setItem(blueprintKey, JSON.stringify(blueprint, null, 2))
-  console.log(`✅ Blueprint 已保存到 R2: ${blueprintKey}`)
+  if (!local) {
+    await r2.setItem(blueprintKey, JSON.stringify(blueprint, null, 2))
+    console.log(`✅ Blueprint 已保存到 R2: ${blueprintKey}`)
+  }
 
   // Step 3, Generate Cover Image.
   const coverPrompt = await generateCoverPrompt({
@@ -182,16 +192,17 @@ async function main() {
   const imageBuffer = await generateCoverImage(coverPrompt)
 
   // Step 3.1 Save Cover Image to R2 and temporary directory
-  const coverImageKey = `episodes/${date}/cover.png`
-  await r2.setItemRaw(coverImageKey, new Uint8Array(imageBuffer))
-  console.log(`✅ Cover Image 已保存到 R2: ${coverImageKey}`)
-
-  // Save cover image to temporary directory for ffmpeg
   const tmpDir = join(process.cwd(), '.tmp')
   await mkdir(tmpDir, { recursive: true })
   const coverImagePath = join(tmpDir, `cover-${date}.png`)
   await writeFile(coverImagePath, new Uint8Array(imageBuffer))
   console.log(`✅ Cover Image 已保存到临时目录: ${coverImagePath}`)
+
+  if (!local) {
+    const coverImageKey = `episodes/${date}/cover.png`
+    await r2.setItemRaw(coverImageKey, new Uint8Array(imageBuffer))
+    console.log(`✅ Cover Image 已保存到 R2: ${coverImageKey}`)
+  }
 
   // Step 4: Generate Scripts
   console.log('\n📝 开始生成脚本...')
@@ -237,37 +248,58 @@ async function main() {
     },
   }
 
-  // Step 5: Generate Audio
-  console.log('\n🎵 开始生成音频...')
-  const audioFileName = `episode-${date}.mp3`
-  const { audioPath, scriptWithTimeline } = await generatePodcastAudio(
-    fullScript,
-    audioFileName,
-    coverImagePath
-  )
+  // Step 5: Generate Audio (skip in local mode)
+  let audioPath: string | undefined
+  let scriptWithTimeline: any
 
-  // Step 5.0: Save Full Script (with timestamps) to R2
-  const scriptKey = `episodes/${date}/script.json`
-  await r2.setItem(scriptKey, JSON.stringify(scriptWithTimeline, null, 2))
-  console.log(`✅ 完整脚本（含时间轴）已保存到 R2: ${scriptKey}`)
+  if (!local) {
+    console.log('\n🎵 开始生成音频...')
+    const audioFileName = `episode-${date}.mp3`
+    const result = await generatePodcastAudio(fullScript, audioFileName, coverImagePath)
+    audioPath = result.audioPath
+    scriptWithTimeline = result.scriptWithTimeline
 
-  // Step 5.1: Upload Audio to R2
-  console.log('\n📤 上传音频到 R2...')
-  const audioBuffer = await readFile(audioPath)
-  const audioKey = `episodes/${date}/audio.mp3`
-  await r2.setItemRaw(audioKey, new Uint8Array(audioBuffer))
-  console.log(`✅ 音频已上传到 R2: ${audioKey}`)
+    // Step 5.0: Save Full Script (with timestamps) to R2
+    const scriptKey = `episodes/${date}/script.json`
+    await r2.setItem(scriptKey, JSON.stringify(scriptWithTimeline, null, 2))
+    console.log(`✅ 完整脚本（含时间轴）已保存到 R2: ${scriptKey}`)
 
-  // Step 5.2: Clean up temporary audio file and cover image
-  await rm(audioPath)
-  await rm(coverImagePath)
-  console.log(`🧹 已清理临时音频文件和封面图片`)
+    // Step 5.1: Upload Audio to R2
+    console.log('\n📤 上传音频到 R2...')
+    const audioBuffer = await readFile(audioPath)
+    const audioKey = `episodes/${date}/audio.mp3`
+    await r2.setItemRaw(audioKey, new Uint8Array(audioBuffer))
+    console.log(`✅ 音频已上传到 R2: ${audioKey}`)
+
+    // Step 5.2: Clean up temporary audio file and cover image
+    await rm(audioPath)
+    await rm(coverImagePath)
+    console.log(`🧹 已清理临时音频文件和封面图片`)
+  } else {
+    console.log('\n⏭️  本地调试模式：跳过音频生成和 R2 上传')
+    // 在本地模式下，创建一个简化的脚本（不含时间轴）
+    scriptWithTimeline = {
+      intro: { lines: introScript.lines.map((line: any) => ({ ...line, start: 0, end: 0 })) },
+      segments: segmentScripts.map((seg) => ({
+        lines: seg.lines.map((line: any) => ({ ...line, start: 0, end: 0 })),
+      })),
+      outro: { lines: outroScript.lines.map((line: any) => ({ ...line, start: 0, end: 0 })) },
+      metadata: fullScript.metadata,
+    }
+
+    // 保存脚本到本地临时目录
+    const scriptPath = join(tmpDir, `script-${date}.json`)
+    await writeFile(scriptPath, JSON.stringify(scriptWithTimeline, null, 2), 'utf-8')
+    console.log(`✅ 脚本已保存到临时目录: ${scriptPath}`)
+  }
 
   // Step 6: Convert to Markdown and save locally
   console.log('\n📄 生成 Markdown 文件...')
   const r2PublicUrl = process.env.CF_R2_PUBLIC_URL || ''
-  const audioUrl = `${r2PublicUrl}/episodes/${date}/audio.mp3`
-  const coverImageUrl = `${r2PublicUrl}/episodes/${date}/cover.png`
+  const audioUrl = local ? '' : `${r2PublicUrl}/episodes/${date}/audio.mp3`
+  const coverImageUrl = local
+    ? `/src/content/episodes/cover-${date}.png`
+    : `${r2PublicUrl}/episodes/${date}/cover.png`
   const markdown = await convertScriptToMarkdown(
     scriptWithTimeline,
     blueprint,
@@ -283,12 +315,20 @@ async function main() {
   await writeFile(markdownPath, markdown, 'utf-8')
   console.log(`✅ Markdown 已保存到: ${markdownPath}`)
 
-  // Step 7: 更新 KV 中的最新期数（仅在生成新期数时）
-  if (EPISODE_NUMBER > latestEpisode) {
+  // Step 7: 更新 KV 中的最新期数（仅在生成新期数且非本地模式时）
+  if (EPISODE_NUMBER > latestEpisode && !local) {
     await updateLatestEpisodeNumberInKV(EPISODE_NUMBER)
   }
 
-  console.log(`\n🎉 播客 Episode ${EPISODE_NUMBER} 生成完成！`)
+  if (local) {
+    console.log(`\n🎉 播客 Episode ${EPISODE_NUMBER} 本地调试生成完成！`)
+    console.log(`📁 生成的文件：`)
+    console.log(`   - 封面图片: ${coverImagePath}`)
+    console.log(`   - 脚本: ${join(tmpDir, `script-${date}.json`)}`)
+    console.log(`   - Markdown: ${markdownPath}`)
+  } else {
+    console.log(`\n🎉 播客 Episode ${EPISODE_NUMBER} 生成完成！`)
+  }
 }
 
 // 执行主函数
