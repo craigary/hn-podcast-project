@@ -30,36 +30,30 @@ jobs:
       - name: 签出代码
         uses: actions/checkout@v4
 
-      - name: 安装 pnpm
-        uses: pnpm/action-setup@v4
+      - name: 设置 Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 10
-
-      - name: 设置 Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
+          bun-version: latest
 
       - name: 安装依赖
-        run: pnpm install
+        run: bun install --frozen-lockfile
 
       - name: 安装 FFmpeg
         uses: FedericoCarboni/setup-ffmpeg@v3
 
       - name: 生成播客剧集
         run: |
-          ARGS=""
+          ARGS=()
           if [ -n "${{ inputs.episode }}" ]; then
-            ARGS="$ARGS --episode ${{ inputs.episode }}"
+            ARGS+=(--episode "${{ inputs.episode }}")
           fi
           if [ -n "${{ inputs.date }}" ]; then
-            ARGS="$ARGS --date ${{ inputs.date }}"
+            ARGS+=(--date "${{ inputs.date }}")
           fi
           if [ "${{ inputs.force }}" = "true" ]; then
-            ARGS="$ARGS --force"
+            ARGS+=(--force)
           fi
-          pnpm run gen $ARGS
+          bun run gen -- "${ARGS[@]}"
         env:
           CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}

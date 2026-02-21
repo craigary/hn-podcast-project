@@ -21,8 +21,17 @@
 ## 技术栈
 
 - **开发语言**: TypeScript
-- **运行环境**: Node.js
+- **运行环境**: Bun
 - **前端框架**: Astro
 - **AI 模型**: Cerebras, Mistral, Pollinations
 - **音频处理**: FFmpeg, Microsoft Azure TTS
 - **云服务**: Cloudflare R2 (对象存储), Cloudflare KV (键值存储)
+
+## 常用命令
+
+- 安装依赖：`bun install`
+- 开发站点：`bun run dev`
+- 构建站点：`bun run build`
+- 生成播客：`bun run gen`
+- 指定参数生成：`bun run gen -- --episode 15 --date 2026-02-20 --force`
+- 同步 KV：`bun run sync-kv`

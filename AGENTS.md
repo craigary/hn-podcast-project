@@ -5,8 +5,8 @@
 ## 0) 项目概览
 
 - 项目名：`hn-podcast-project`（HN 瞎聊）
-- 类型：`pnpm workspace` monorepo（不是 Bun workspace）
-- 语言：TypeScript（前端 Astro + 生成器 Node 脚本）
+- 类型：`bun workspace` monorepo
+- 语言：TypeScript（前端 Astro + 生成器 Bun 脚本）
 - 核心链路：抓取 HN 热门 -> AI 生成大纲与对话 -> Azure TTS + FFmpeg 合成音频 -> 上传 R2 -> 生成 episode markdown -> Astro 站点展示与 RSS 输出
 
 ## 1) 工作区结构
@@ -14,7 +14,7 @@
 ```txt
 apps/
   web/         # Astro 6 beta 网站（内容展示 + RSS）
-  generator/   # 播客生成流水线（tsx 执行）
+  generator/   # 播客生成流水线（bun 执行）
 packages/
   config/      # 共享配置（站点、主持人、模型、平台链接）
 ```
@@ -30,20 +30,20 @@ packages/
 
 ## 安装
 
-- `pnpm install`
+- `bun install`
 
 ## 开发/构建
 
-- `pnpm run dev`：启动网站开发环境（等价 `pnpm --filter web dev`）
-- `pnpm run build`：构建网站（等价 `pnpm --filter web build`）
-- `pnpm run preview`：预览构建产物
+- `bun run dev`：启动网站开发环境（等价 `bun run --cwd apps/web dev`）
+- `bun run build`：构建网站（等价 `bun run --cwd apps/web build`）
+- `bun run preview`：预览构建产物
 
 ## 生成播客
 
-- `pnpm run gen`：自动生成下一期
-- `pnpm run gen -- --episode 15`：指定期数
-- `pnpm run gen -- --date 2026-02-20`：指定 HN 抓取日期
-- `pnpm run gen -- --episode 15 --force`：覆盖已有期数文件
+- `bun run gen`：自动生成下一期
+- `bun run gen -- --episode 15`：指定期数
+- `bun run gen -- --date 2026-02-20`：指定 HN 抓取日期
+- `bun run gen -- --episode 15 --force`：覆盖已有期数文件
 
 说明：
 
@@ -53,9 +53,9 @@ packages/
 
 ## 辅助命令
 
-- `pnpm --filter generator sync-kv`：把本地最新期数同步到 Cloudflare KV
-- `pnpm run lint`：ESLint（带 `--fix`）
-- `pnpm run format`：Prettier
+- `bun run sync-kv`：把本地最新期数同步到 Cloudflare KV
+- `bun run lint`：ESLint（带 `--fix`）
+- `bun run format`：Prettier
 
 ## 3) 生成流水线（apps/generator）
 
@@ -85,7 +85,7 @@ packages/
 
 建议：
 
-- Node.js 22（与 CI 保持一致）
+- Bun 1.3.x（与 CI 保持一致）
 - 系统需可用 `ffmpeg` 与 `ffprobe`（音频步骤依赖）
 
 主要环境变量（生成器）：

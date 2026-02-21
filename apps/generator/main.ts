@@ -147,7 +147,7 @@ async function main() {
     if (exists && !force) {
       console.log(`\n⚠️  Episode ${EPISODE_NUMBER} 已存在！`)
       console.log(`提示：使用 --force 参数强制覆盖`)
-      console.log(`示例：pnpm run gen --episode ${EPISODE_NUMBER} --force\n`)
+      console.log(`示例：bun run gen -- --episode ${EPISODE_NUMBER} --force\n`)
       process.exit(0)
     }
 

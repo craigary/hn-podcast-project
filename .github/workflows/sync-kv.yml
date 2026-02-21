@@ -11,22 +11,16 @@ jobs:
       - name: 签出代码
         uses: actions/checkout@v6
 
-      - name: 设置 pnpm
-        uses: pnpm/action-setup@v4
+      - name: 设置 Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9
-
-      - name: 设置 Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '22'
-          cache: 'pnpm'
+          bun-version: latest
 
       - name: 安装依赖
-        run: pnpm install
+        run: bun install --frozen-lockfile
 
       - name: 同步 KV
-        run: pnpm --filter generator sync-kv
+        run: bun run sync-kv
         env:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
