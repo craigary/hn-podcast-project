@@ -83,6 +83,7 @@ ${storiesContext}
 - 本期节目标题：${episodeOverview.title}
 - 本环节是第 ${segmentIndex + 1} 个环节
 - 要自然地引用故事中的关键信息和犀利评论
+- 在开始时避免出现脏话，先通过对话简要描述原始内容
 - 保持人设一致，对话要生动有趣`
 
   console.log('上下文提示词长度：', prompt.length)
