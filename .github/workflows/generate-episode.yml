@@ -2,8 +2,8 @@ name: 生成播客剧集
 
 on:
   schedule:
-    # 每天 UTC 08:00 运行（即北京时间 16:00）
-    - cron: '0 8 * * *'
+    # 每天 UTC 03:00 运行（即北京时间 11:00 am）
+    - cron: '0 3 * * *'
   workflow_dispatch:
     inputs:
       episode:

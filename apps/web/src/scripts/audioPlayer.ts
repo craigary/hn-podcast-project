@@ -2,6 +2,21 @@
  * Audio Player Controller
  * A robust singleton controller that survives Astro page transitions.
  */
+
+interface AudioPlayerState {
+  src: string
+  title: string
+  currentTime: number
+  isPlaying: boolean
+  isVisible: boolean
+}
+
+declare global {
+  interface Window {
+    playEpisode?: (src: string, title: string) => void
+  }
+}
+
 class AudioPlayerController {
   private static instance: AudioPlayerController | null = null
 
@@ -65,9 +80,11 @@ class AudioPlayerController {
       const saved = sessionStorage.getItem('audioPlayerState')
       if (saved) {
         try {
-          const state = JSON.parse(saved)
+          const state = this.parseAudioPlayerState(saved)
           if (state.isVisible && state.src) this.show()
-        } catch (e) {}
+        } catch {
+          sessionStorage.removeItem('audioPlayerState')
+        }
       }
     }
 
@@ -322,7 +339,7 @@ class AudioPlayerController {
     const saved = sessionStorage.getItem('audioPlayerState')
     if (!saved || !this.audio) return
     try {
-      const state = JSON.parse(saved)
+      const state = this.parseAudioPlayerState(saved)
       if (state.src) {
         this.audio.src = state.src
         if (this.elements.playerTitle) this.elements.playerTitle.textContent = state.title
@@ -330,7 +347,9 @@ class AudioPlayerController {
         if (state.isVisible) this.show()
         if (state.isPlaying) this.audio.play().catch(() => {})
       }
-    } catch (e) {}
+    } catch {
+      sessionStorage.removeItem('audioPlayerState')
+    }
   }
 
   // --- Synchronization ---
@@ -359,7 +378,27 @@ class AudioPlayerController {
   }
 
   private initGlobalAPI() {
-    ;(window as any).playEpisode = (src: string, title: string) => this.play(src, title)
+    window.playEpisode = (src: string, title: string) => this.play(src, title)
+  }
+
+  private parseAudioPlayerState(raw: string): AudioPlayerState {
+    const parsed: unknown = JSON.parse(raw)
+    if (!this.isAudioPlayerState(parsed)) {
+      throw new Error('Invalid audio player state')
+    }
+    return parsed
+  }
+
+  private isAudioPlayerState(value: unknown): value is AudioPlayerState {
+    if (typeof value !== 'object' || value === null) return false
+    const state = value as Partial<AudioPlayerState>
+    return (
+      typeof state.src === 'string' &&
+      typeof state.title === 'string' &&
+      typeof state.currentTime === 'number' &&
+      typeof state.isPlaying === 'boolean' &&
+      typeof state.isVisible === 'boolean'
+    )
   }
 
   private formatTime(s: number): string {
