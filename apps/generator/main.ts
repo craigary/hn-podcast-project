@@ -36,9 +36,14 @@ function parseArgs() {
 }
 
 // 获取最新的期数（优先从文件系统，KV 作为备用）
-async function getLatestEpisodeNumber(): Promise<number> {
+async function getLatestEpisodeNumber(local = false): Promise<number> {
   // 优先从文件系统获取（single source of truth）
   const fsEpisode = await getLatestEpisodeNumberFromFS()
+
+  // 本地模式下跳过 KV 同步
+  if (local) {
+    return fsEpisode
+  }
 
   // 尝试从 KV 获取并同步
   try {
@@ -125,7 +130,7 @@ async function main() {
   const { episode: argEpisode, date: argDate, force, local } = parseArgs()
 
   // 获取文件系统中的最新期数
-  const latestEpisode = await getLatestEpisodeNumber()
+  const latestEpisode = await getLatestEpisodeNumber(local)
 
   // 确定期数和日期
   let EPISODE_NUMBER: number
