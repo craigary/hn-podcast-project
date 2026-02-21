@@ -4,7 +4,7 @@ import type { FullScriptWithTimeline } from './tts'
 import { generateText, Output } from 'ai'
 import { mistral } from '../ai/mistral'
 import { z } from 'zod'
-import pangu from 'pangu'
+import { processText } from './text'
 
 const model = mistral('mistral-large-latest')
 
@@ -84,33 +84,9 @@ ${dialogueText.slice(0, 2000)}
 请生成吸引人的章节标题和描述。`,
       })
 
-      // 处理标题：转换引号 + pangu 空格
-      let processedTitle = output.title
-        // 先处理智能引号（curly quotes）
-        .replace(/[\u201c\u201d]/g, (match) => (match === '\u201c' ? '\u300c' : '\u300d')) // " → 「, " → 」
-        .replace(/[\u2018\u2019]/g, (match) => (match === '\u2018' ? '\u300c' : '\u300d')) // ' → 「, ' → 」
-        // 处理已有的中文引号（统一为折角引号）
-        .replace(/[\u300e\u300f]/g, (match) => (match === '\u300e' ? '\u300c' : '\u300d')) // 『 → 「, 』 → 」
-        .replace(/[\u3010\u3011]/g, (match) => (match === '\u3010' ? '\u300c' : '\u300d')) // 【 → 「, 】 → 」
-        // 再处理普通引号（straight quotes）
-        .replace(/"([^"]*)"/g, '\u300c$1\u300d') // "text" → 「text」
-        .replace(/'([^']*)'/g, '\u300c$1\u300d') // 'text' → 「text」
-
-      processedTitle = pangu.spacingText(processedTitle)
-
-      // 处理描述：转换引号 + pangu 空格
-      let processedDesc = output.desc
-        // 先处理智能引号（curly quotes）
-        .replace(/[\u201c\u201d]/g, (match) => (match === '\u201c' ? '\u300c' : '\u300d')) // " → 「, " → 」
-        .replace(/[\u2018\u2019]/g, (match) => (match === '\u2018' ? '\u300c' : '\u300d')) // ' → 「, ' → 」
-        // 处理已有的中文引号（统一为折角引号）
-        .replace(/[\u300e\u300f]/g, (match) => (match === '\u300e' ? '\u300c' : '\u300d')) // 『 → 「, 』 → 」
-        .replace(/[\u3010\u3011]/g, (match) => (match === '\u3010' ? '\u300c' : '\u300d')) // 【 → 「, 】 → 」
-        // 再处理普通引号（straight quotes）
-        .replace(/"([^"]*)"/g, '\u300c$1\u300d') // "text" → 「text」
-        .replace(/'([^']*)'/g, '\u300c$1\u300d') // 'text' → 「text」
-
-      processedDesc = pangu.spacingText(processedDesc)
+      // 文本后处理：引号转换 + pangu 空格
+      const processedTitle = processText(output.title)
+      const processedDesc = processText(output.desc)
 
       chapters.push({
         title: processedTitle,
