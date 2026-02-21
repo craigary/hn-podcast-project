@@ -289,7 +289,10 @@ export const generatePodcastAudio = async (
     // 直接累加实际时长，不使用缩放
     // 关键：0.1s 间隔已经在 concat 时物理插入，所以这里只需要累加原始时长 + 0.1
     results.forEach((r, index) => {
-      const start = Math.round((baseTime + currentTime) * 100) / 100
+      // 修正：将时间戳提前 0.1s（即指向前一个静音片段的开始），以优化播放体验
+      // 第一句不提前，因为没有前置静音
+      const offset = index > 0 ? -0.1 : 0
+      const start = Math.round((baseTime + currentTime + offset) * 100) / 100
       const end = Math.round((baseTime + currentTime + r.duration) * 100) / 100
       timestamps.push({ start, end })
 
