@@ -217,6 +217,16 @@ export const generatePodcastAudio = async (
     'v_outro.mp3'
   )
 
+  // 重新获取拼接后文件的实际时长（因为添加了 apad 和 break，时长会增加）
+  const getActualDuration = async (filePath: string | null): Promise<number> => {
+    if (!filePath) return 0
+    return await getAudioDuration(filePath)
+  }
+
+  const vIntroDuration = await getActualDuration(vIntro)
+  const vSegsDurations = await Promise.all(vSegs.map((seg) => getActualDuration(seg)))
+  const vOutroDuration = await getActualDuration(vOutro)
+
   // --- 5. 最终混音与全篇拼接 (Filter Complex) ---
   console.log('\n  🎬 正在进行最终全篇混音与渲染...')
 
@@ -308,18 +318,40 @@ export const generatePodcastAudio = async (
       currentTime += clip.duration
     } else if (clip.kind === 'voice') {
       const ref = voiceSectionMap.get(clip.path)
-      let durations: number[] = []
-      if (ref?.section === 'intro') durations = introResults.map((r) => r.duration)
-      else if (ref?.section === 'outro') durations = outroResults.map((r) => r.duration)
-      else if (ref?.section === 'segment' && ref.segIdx !== undefined)
-        durations = segmentVoiceResults[ref.segIdx]?.map((r) => r.duration) ?? []
 
+      // 使用拼接后文件的实际时长，而不是原始片段时长之和
+      let totalDuration = 0
+      let lineCount = 0
+      if (ref?.section === 'intro') {
+        totalDuration = vIntroDuration
+        lineCount = introResults.length
+      } else if (ref?.section === 'outro') {
+        totalDuration = vOutroDuration
+        lineCount = outroResults.length
+      } else if (ref?.section === 'segment' && ref.segIdx !== undefined) {
+        totalDuration = vSegsDurations[ref.segIdx] ?? 0
+        lineCount = segmentVoiceResults[ref.segIdx]?.length ?? 0
+      }
+
+      // 按比例分配时间给每一行（保持原始比例）
       const timestamps: { start: number; end: number }[] = []
-      for (const dur of durations) {
-        const start = Math.round(currentTime * 100) / 100
-        const end = Math.round((currentTime + dur) * 100) / 100
-        timestamps.push({ start, end })
-        currentTime += dur
+      if (lineCount > 0 && totalDuration > 0) {
+        let originalDurations: number[] = []
+        if (ref?.section === 'intro') originalDurations = introResults.map((r) => r.duration)
+        else if (ref?.section === 'outro') originalDurations = outroResults.map((r) => r.duration)
+        else if (ref?.section === 'segment' && ref.segIdx !== undefined)
+          originalDurations = segmentVoiceResults[ref.segIdx]?.map((r) => r.duration) ?? []
+
+        const originalTotal = originalDurations.reduce((sum, d) => sum + d, 0)
+        const scaleFactor = originalTotal > 0 ? totalDuration / originalTotal : 1
+
+        for (const originalDur of originalDurations) {
+          const scaledDur = originalDur * scaleFactor
+          const start = Math.round(currentTime * 100) / 100
+          const end = Math.round((currentTime + scaledDur) * 100) / 100
+          timestamps.push({ start, end })
+          currentTime += scaledDur
+        }
       }
       sectionTimestamps.set(clip.path, timestamps)
     }
