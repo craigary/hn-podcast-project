@@ -1,8 +1,9 @@
 // config.ts
 export const podcastConfig = {
   site: {
-    url: process.env.NODE_ENV === 'development' ? 'http://localhost:4321' : 'https://craigary.net',
-    // production: 'https://craigary.net', // 生产环境的实际域名
+    url:
+      process.env.NODE_ENV === 'development' ? 'http://localhost:4321' : 'https://hn.craigary.net',
+    production: 'https://hn.craigary.net', // 生产环境的实际域名
     email: 'podcast@example.com', // 播客联系邮箱
     description: '一档由 AI 驱动的 Hacker News 每日深度对谈播客',
   },
