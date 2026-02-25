@@ -1,15 +1,15 @@
 // src/steps/script.ts
 
 import { generateText, Output } from 'ai'
-import { PodcastBlueprint } from '../ai/prompts/blueprint'
-import { ProcessedStory } from '../types'
+import type { PodcastBlueprint } from '../ai/prompts/blueprint'
+import type { ProcessedStory } from '../types'
 
 import {
   SegmentScriptSchema,
   getScriptPrompt,
   getIntroPrompt,
   getOutroPrompt,
-  SegmentScript,
+  type SegmentScript,
 } from '../ai/prompts/script'
 import { fetchContentByExa } from '../utils/exa'
 import { mistral } from '../ai/mistral'

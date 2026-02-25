@@ -1,5 +1,5 @@
-export const EXA_BASE_URL = 'https://exapool.chengtx.vip/contents'
-export const EXA_API_KEY = 'linuxdo@chengtx'
+export const EXA_BASE_URL = 'https://api.exa.ai/contents'
+export const EXA_API_KEY = process.env.EXA_API_KEY!
 
 interface ExaContentResult {
   text?: string
