@@ -60,20 +60,25 @@ async function generateChapters(
       .map((story) => `- ${story.title} (${story.category})`)
       .join('\n')
 
-    // 使用 AI 生成章节标题和描述
-    try {
-      const { output } = await generateText({
-        model: model,
-        output: Output.object({
-          schema: ChapterSummarySchema,
-        }),
-        system: `你是一个播客章节总结专家。请根据对话内容生成简短、吸引人的章节标题和描述。
+    // 使用 AI 生成章节标题和描述（带重试）
+    let retryCount = 0
+    const maxRetries = 3
+    let success = false
+
+    while (retryCount < maxRetries && !success) {
+      try {
+        const { output } = await generateText({
+          model: model,
+          output: Output.object({
+            schema: ChapterSummarySchema,
+          }),
+          system: `你是一个播客章节总结专家。请根据对话内容生成简短、吸引人的章节标题和描述。
 
 要求：
 - 标题：5-10 字，简洁有力，吸引人点击
 - 描述：1-2 句话，总结本段讨论的核心观点和亮点
 - 语气要轻松、口语化，符合播客风格`,
-        prompt: `请为以下播客片段生成章节标题和描述：
+          prompt: `请为以下播客片段生成章节标题和描述：
 
 【讨论的话题】
 ${storiesContext}
@@ -82,29 +87,39 @@ ${storiesContext}
 ${dialogueText.slice(0, 2000)}
 
 请生成吸引人的章节标题和描述。`,
-      })
+        })
 
-      // 文本后处理：引号转换 + pangu 空格
-      const processedTitle = processText(output.title)
-      const processedDesc = processText(output.desc)
+        // 文本后处理：引号转换 + pangu 空格
+        const processedTitle = processText(output.title)
+        const processedDesc = processText(output.desc)
 
-      chapters.push({
-        title: processedTitle,
-        desc: processedDesc,
-        start: Math.floor(startTime),
-        storyIds: segment.story_ids,
-      })
+        chapters.push({
+          title: processedTitle,
+          desc: processedDesc,
+          start: Math.floor(startTime),
+          storyIds: segment.story_ids,
+        })
 
-      console.log(`✅ Chapter ${i + 1}: ${processedTitle}`)
-    } catch (error) {
-      console.error(`❌ 生成 Chapter ${i + 1} 失败:`, error)
-      // 使用默认值
-      chapters.push({
-        title: `第 ${i + 1} 部分`,
-        desc: segmentStories.map((s) => s.title).join('、'),
-        start: Math.floor(startTime),
-        storyIds: segment.story_ids,
-      })
+        console.log(`✅ Chapter ${i + 1}: ${processedTitle}`)
+        success = true
+      } catch (error) {
+        retryCount++
+        console.error(`❌ 生成 Chapter ${i + 1} 失败 (尝试 ${retryCount}/${maxRetries}):`, error)
+
+        if (retryCount < maxRetries) {
+          console.log(`⏳ 等待 2 秒后重试...`)
+          await new Promise(resolve => setTimeout(resolve, 2000))
+        } else {
+          console.error(`❌ Chapter ${i + 1} 重试 ${maxRetries} 次后仍然失败，使用默认值`)
+          // 使用默认值
+          chapters.push({
+            title: `第 ${i + 1} 部分`,
+            desc: segmentStories.map((s) => s.title).join('、'),
+            start: Math.floor(startTime),
+            storyIds: segment.story_ids,
+          })
+        }
+      }
     }
 
     // 更新当前时间
