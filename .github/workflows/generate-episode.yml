@@ -20,6 +20,11 @@ on:
         type: boolean
         default: false
 
+concurrency:
+  # 同一分支上的生成任务串行执行，避免并发提交互相覆盖
+  group: generate-episode-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   generate:
     runs-on: ubuntu-latest
@@ -29,6 +34,9 @@ jobs:
     steps:
       - name: 签出代码
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
 
       - name: 设置 Bun
         uses: oven-sh/setup-bun@v2
@@ -71,6 +79,7 @@ jobs:
 
       - name: 提交并推送新剧集
         run: |
+          BRANCH="${GITHUB_REF_NAME}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add apps/web/src/content/episodes/
@@ -82,5 +91,7 @@ jobs:
             git commit -m "🎙️ 自动生成新播客剧集: ${EPISODE_FILE}
 
           Co-authored-by: Craig Hart <i@craigary.net>"
-            git push
+            git fetch origin "${BRANCH}"
+            git rebase "origin/${BRANCH}"
+            git push origin "HEAD:${BRANCH}"
           fi

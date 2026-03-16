@@ -21,8 +21,8 @@ export const generateCoverPrompt = async ({
   const title = blueprint.episode_overview.title
 
   const { text } = await generateText({
-    model: cerebras('gpt-oss-120b'),
-    providerOptions: { cerebras: { reasoningEffort: 'medium' } },
+    model: cerebras('qwen-3-235b-a22b-instruct-2507'),
+    // providerOptions: { cerebras: { reasoningEffort: 'medium' } },
     system: imageGenSystemPrompt,
     prompt: title,
   })

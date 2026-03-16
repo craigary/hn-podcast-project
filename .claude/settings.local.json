@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun add:*)",
+      "Bash(bun run build:*)",
+      "Bash(wrangler --version:*)",
+      "Bash(bun install:*)",
+      "Bash(git add:*)",
+      "Bash(git restore:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(ls:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm format:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(git -C /Users/craighart/Developer/hn-podcast-project log --oneline -20)",
+      "Bash(npm install:*)",
+      "Bash(pnpm run dev)",
+      "Bash(grep:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(pnpm astro check:*)",
+      "Bash(git checkout:*)",
+      "Bash(git rebase:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(curl:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

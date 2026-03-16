@@ -27,11 +27,11 @@ export const generateBlueprint = async ({
 
   try {
     const { output } = await generateText({
-      model: cerebras('gpt-oss-120b'),
+      model: cerebras('qwen-3-235b-a22b-instruct-2507'),
       output: Output.object({
         schema: BlueprintSchema,
       }),
-      providerOptions: { cerebras: { reasoningEffort: 'medium' } },
+      // providerOptions: { cerebras: { reasoningEffort: 'medium' } },
       system: getBlueprintPrompt(date),
       prompt: `这是今天的候选情报列表：\n${JSON.stringify(candidates)}`,
     })
