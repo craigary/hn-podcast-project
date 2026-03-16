@@ -2,9 +2,9 @@
 
 import { generateText, Output } from 'ai'
 import { BlueprintSchema, getBlueprintPrompt } from '../ai/prompts/blueprint'
-import { ProcessedStory } from '../types'
+import type { ProcessedStory } from '../types'
 import { kv } from '../utils/storage/kv'
-import { cerebras } from '../ai/cerebras'
+import { openai } from '../ai/openai'
 import { processText } from '../utils/text'
 
 export const generateBlueprint = async ({
@@ -27,11 +27,10 @@ export const generateBlueprint = async ({
 
   try {
     const { output } = await generateText({
-      model: cerebras('qwen-3-235b-a22b-instruct-2507'),
+      model: openai('openai/gpt-oss-120b'),
       output: Output.object({
         schema: BlueprintSchema,
       }),
-      // providerOptions: { cerebras: { reasoningEffort: 'medium' } },
       system: getBlueprintPrompt(date),
       prompt: `这是今天的候选情报列表：\n${JSON.stringify(candidates)}`,
     })

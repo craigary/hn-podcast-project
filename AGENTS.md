@@ -93,7 +93,7 @@ packages/
 - AI：
   - `CEREBRAS_API_KEY`
   - `MISTRAL_API_KEY`
-  - `OPENAI_API_KEY`
+  - `NIM_API_KEY`
   - `LONGCAT_API_KEY`
   - `POLLINATIONS_API_KEY`
 - Cloudflare：

@@ -1,9 +1,11 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 
 const openai = createOpenAICompatible({
-  name: 'openai',
-  apiKey: process.env.OPENAI_API_KEY!,
-  baseURL: 'https://x666.me/v1',
+  name: 'nim',
+  baseURL: 'https://integrate.api.nvidia.com/v1',
+  headers: {
+    Authorization: `Bearer ${process.env.NIM_API_KEY}`,
+  },
   includeUsage: true,
   supportsStructuredOutputs: true,
 })

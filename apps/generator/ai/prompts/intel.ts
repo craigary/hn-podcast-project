@@ -5,8 +5,11 @@ import { z } from 'zod'
 export const IntelSchema = z.object({
   id: z.number().describe('Story ID'),
   title: z.string().describe('原始标题'),
-  category: z.enum(['Tech', 'AI', 'Career', 'Society', 'Show HN', 'Other']).describe('话题分类'),
-
+  category: z
+    .string()
+    .describe(
+      '话题分类，只能返回以下之一：Tech, AI, Career, Society, Show HN, Other。不要返回任何其他类别名。'
+    ),
   // 核心决策字段：让 AI 帮你打分，决定要不要聊这个
   discussability_score: z
     .number()

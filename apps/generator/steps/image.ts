@@ -1,7 +1,7 @@
 import { generateText } from 'ai'
-import { cerebras } from '../ai/cerebras'
+import { openai } from '../ai/openai'
 import { kv } from '../utils/storage/kv'
-import { PodcastBlueprint } from '../ai/prompts/blueprint'
+import type { PodcastBlueprint } from '../ai/prompts/blueprint'
 import { imageGenSystemPrompt } from '../ai/prompts/image'
 
 export const generateCoverPrompt = async ({
@@ -21,8 +21,7 @@ export const generateCoverPrompt = async ({
   const title = blueprint.episode_overview.title
 
   const { text } = await generateText({
-    model: cerebras('qwen-3-235b-a22b-instruct-2507'),
-    // providerOptions: { cerebras: { reasoningEffort: 'medium' } },
+    model: openai('openai/gpt-oss-120b'),
     system: imageGenSystemPrompt,
     prompt: title,
   })
