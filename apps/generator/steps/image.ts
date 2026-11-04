@@ -1,8 +1,17 @@
 import { generateText } from 'ai'
-import { openai } from '../ai/openai'
+import { join } from 'path'
+import { superlinked } from '../ai/superlinked'
 import { kv } from '../utils/storage/kv'
 import type { PodcastBlueprint } from '../ai/prompts/blueprint'
 import { imageGenSystemPrompt } from '../ai/prompts/image'
+
+// 兜底封面（放在仓库里，不依赖任何外部服务）
+const DEFAULT_COVER_PATH = join(import.meta.dir, '..', 'assets', 'default-cover.png')
+
+export const loadDefaultCover = async (): Promise<ArrayBuffer> => {
+  console.log('🖼️  使用默认封面')
+  return Bun.file(DEFAULT_COVER_PATH).arrayBuffer()
+}
 
 export const generateCoverPrompt = async ({
   blueprint,
@@ -21,7 +30,7 @@ export const generateCoverPrompt = async ({
   const title = blueprint.episode_overview.title
 
   const { text } = await generateText({
-    model: openai('openai/gpt-oss-120b'),
+    model: superlinked('Qwen/Qwen3.8-27B-FP8'),
     system: imageGenSystemPrompt,
     prompt: title,
   })
@@ -48,6 +57,11 @@ export const generateCoverImage = async (prompt: string): Promise<ArrayBuffer> =
 
   if (!res.ok) {
     throw new Error(`Pollinations API error: ${res.status} ${res.statusText}`)
+  }
+
+  const contentType = res.headers.get('content-type') ?? ''
+  if (!contentType.startsWith('image/')) {
+    throw new Error(`Pollinations 返回的不是图片: ${contentType}`)
   }
 
   const imageBuffer = await res.arrayBuffer()

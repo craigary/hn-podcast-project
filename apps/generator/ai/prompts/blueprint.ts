@@ -27,12 +27,19 @@ export type PodcastBlueprint = z.infer<typeof BlueprintSchema>
 /**
  * 蓝图提示词：负责根据当日情报编排节目大纲
  */
-export const getBlueprintPrompt = (date: string) => `# Role
+export const getBlueprintPrompt = (weekRange: string) => `# Role
 你是一个极具创意的播客制作人，正在策划硬核技术节目《HN 瞎聊》的最新一期。
-【当前时间】：${date}。
+【本期覆盖的一周】：${weekRange}（这是周更节目，一次覆盖整整一周的热点，不是某一天）
 
 # Task
-请将提供的 HN 情报（Intel）编排成一份跌宕起伏的节目蓝图。
+请将下面提供的这一周 HN 候选故事（每条只有标题、热度、评论区摘要）编排成一份跌宕起伏的节目蓝图。
+
+**这是周更节目**：素材覆盖一周，选题要体现「一周里最值得聊的几件事」，而不是流水账。摘要里反复出现、互相呼应的话题优先。
+
+**重要**：你只有评论区摘要，没有全文。请据此判断哪条值得聊：
+- 摘要里出现明确对立观点、互相反驳、内幕、被推翻的常识 → 优先选
+- 摘要平淡（"大家都在夸"）、纯发布会通稿 → 不要选
+- 优先选能凑成"对比"或"互文"的组合，让整期有主线
 
 # Strategy
 1. **播客简介 (Description)**：
@@ -55,7 +62,7 @@ export const getBlueprintPrompt = (date: string) => `# Role
      - "${podcastConfig.hosts.male.name} 正在一边录音一边给服务器拧螺丝，气喘吁吁"
      - "${podcastConfig.hosts.female.name} 刚被一个神逻辑的产品经理气笑，正在平复心情"
 
-3. **内容编排**：从候选列表中挑选 5-6 个最具讨论价值的话题。
+3. **内容编排**：从这一周的候选里挑选 5-6 个最具讨论价值的话题，用 story 的 id 引用它们，不要编造 id。
 
 4. **环节类型 (Segment Types - 决定时长)**：
    - **DeepDive**：深度剖析（长）。探讨技术背后的权衡与哲学。

@@ -1,12 +1,12 @@
-import { PodcastBlueprint } from '../ai/prompts/blueprint'
-import { ProcessedStory } from '../types'
+import type { PodcastBlueprint } from '../ai/prompts/blueprint'
+import type { ProcessedStory } from '../types'
 import type { FullScriptWithTimeline } from './tts'
-import { generateText, Output } from 'ai'
-import { mistral } from '../ai/mistral'
+import { superlinked } from '../ai/superlinked'
+import { generateStructured } from './llm'
 import { z } from 'zod'
 import { processText } from './text'
 
-const model = mistral('mistral-large-latest')
+const model = superlinked('Qwen/Qwen3.8-27B-FP8')
 
 // Chapter 类型定义
 interface Chapter {
@@ -57,7 +57,7 @@ async function generateChapters(
     // 获取该 segment 讨论的故事信息
     const segmentStories = allStories.filter((story) => segment.story_ids.includes(story.id!))
     const storiesContext = segmentStories
-      .map((story) => `- ${story.title} (${story.category})`)
+      .map((story) => `- ${story.title} (${story.category ?? 'Other'})`)
       .join('\n')
 
     // 使用 AI 生成章节标题和描述（带重试）
@@ -67,11 +67,12 @@ async function generateChapters(
 
     while (retryCount < maxRetries && !success) {
       try {
-        const { output } = await generateText({
+        const output = await generateStructured({
           model: model,
-          output: Output.object({
-            schema: ChapterSummarySchema,
-          }),
+          schema: ChapterSummarySchema,
+          providerName: 'superlinked',
+          structuredMode: 'json_schema',
+          maxOutputTokens: 800,
           system: `你是一个播客章节总结专家。请根据对话内容生成简短、吸引人的章节标题和描述。
 
 要求：
@@ -108,7 +109,7 @@ ${dialogueText.slice(0, 2000)}
 
         if (retryCount < maxRetries) {
           console.log(`⏳ 等待 2 秒后重试...`)
-          await new Promise(resolve => setTimeout(resolve, 2000))
+          await new Promise((resolve) => setTimeout(resolve, 2000))
         } else {
           console.error(`❌ Chapter ${i + 1} 重试 ${maxRetries} 次后仍然失败，使用默认值`)
           // 使用默认值

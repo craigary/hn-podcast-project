@@ -22,7 +22,7 @@ packages/
 关键目录：
 
 - `apps/web/src/content/episodes/*.md`：节目内容源（最终发布内容）
-- `apps/generator/steps/*`：生成步骤（analyze / blueprint / script / image）
+- `apps/generator/steps/*`：生成步骤（screen / blueprint / intel / image / script）
 - `apps/generator/utils/*`：TTS、HN 抓取、markdown 转换、存储等
 - `packages/config/index.ts`：站点与播客公共配置
 
@@ -65,8 +65,9 @@ packages/
 
 1. 解析 CLI 参数，确定 `episode`/`date`，检查是否覆盖
 2. 从 HN Algolia 抓取候选故事（按日期 + points 过滤）
-3. `analyze`：抓正文/评论并生成结构化情报（可缓存 KV）
-4. `blueprint`：生成整期结构（分段、选题、氛围）
+3. `screen`：用 Exa 抓 HN 详情页（text + summary + highlights），KV 缓存 7 天，不调用 LLM
+4. `blueprint`：基于摘要生成整期结构（分段、选题、氛围）
+4.5 `intel`：只对 blueprint 选中的故事批量提取「冲突 + 原话」（1 次 LLM 调用）
 5. `image`：生成封面提示词并拉取封面图
 6. `script`：生成 intro / segment / outro 对话脚本
 7. `tts`：Azure TTS 合成语音，FFmpeg 混音、转场、封面嵌入
@@ -91,10 +92,10 @@ packages/
 主要环境变量（生成器）：
 
 - AI：
-  - `CEREBRAS_API_KEY`
   - `MISTRAL_API_KEY`
   - `NIM_API_KEY`
-  - `LONGCAT_API_KEY`
+  - `SILICONFLOW_API_KEY`
+  - `DEEPSEEK_API_KEY`
   - `POLLINATIONS_API_KEY`
 - Cloudflare：
   - `CF_ACCOUNT_ID`

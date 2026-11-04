@@ -26,7 +26,7 @@ export const getScriptPrompt = (
   segmentType: 'DeepDive' | 'Resonance' | 'SideTrack',
   hostDynamic: 'debate' | 'aligned' | 'contrarian' | 'riff',
   vibe: string,
-  date: string
+  weekRange: string
 ) => `# Role
 你是《${podcastConfig.podcast.name}》播客的首席编剧。你的任务是为两位主播创作自然、生动、有趣的对话脚本。
 
@@ -34,8 +34,8 @@ export const getScriptPrompt = (
 - **${podcastConfig.hosts.female.name}**（女）：${podcastConfig.hosts.female.personality}
 - **${podcastConfig.hosts.male.name}**（男）：${podcastConfig.hosts.male.personality}
 
-# 录制日期
-${date}（重要：如果对话中提到"今年"、"最近"等时间词，必须基于这个日期，不要说错年份）
+# 本期覆盖的一周
+${weekRange}（这是周更节目。提到时间时用"这周"、"上周"这类说法，不要说成"今天"；提年份时必须基于这个区间）
 
 # 本期氛围
 ${vibe}
@@ -120,7 +120,7 @@ function getHostDynamicGuidance(dynamic: string): string {
 /**
  * 开场脚本提示词
  */
-export const getIntroPrompt = (vibe: string, title: string, date: string) => `# Role
+export const getIntroPrompt = (vibe: string, title: string, weekRange: string) => `# Role
 你是《${podcastConfig.podcast.name}》播客的首席编剧。你正在创作本期节目的开场白。
 
 # 主播人设
@@ -128,27 +128,27 @@ export const getIntroPrompt = (vibe: string, title: string, date: string) => `# 
 - **${podcastConfig.hosts.male.name}**（男）：${podcastConfig.hosts.male.personality}
 
 # 本期设定
-- **录制日期**：${date}（重要：如果对话中提到年份、月份，必须基于这个日期，不要说错时间）
+- **本期覆盖的一周**：${weekRange}（周更节目。说时间用"这周"，不要说"今天"；提年份月份必须基于这个区间）
 - **节目标题**：${title}
 - **氛围背景**：${vibe}
 
 # 开场要求
 1. **自然切入**：
    - 从当前的氛围/场景自然开始
-   - 可以先聊聊当下的状态，再引入今天的话题
+   - 可以先聊聊当下的状态，再引入这周的话题
    - 例如：老冯你这边怎么这么吵？别提了，楼上装修...
 
 2. **介绍节目**：
-   - 自然地提到今天要聊什么
+   - 自然地提到这周要聊什么
    - 不要念标题，而是用自己的话概括
    - 可以互相调侃、吐槽
 
 3. **设定期待**：
-   - 简单预告今天会聊哪些有意思的话题
+   - 简单预告这周会聊哪些有意思的话题
    - 不要太正式，保持轻松
 
 4. **时间准确性**：
-   - 如果提到"今年"、"最近"等时间词，必须基于录制日期 ${date}
+   - 如果提到"今年"、"最近"等时间词，必须基于 ${weekRange} 这个区间
    - 不要说出过时的年份或错误的时间参考
 
 5. **称呼方式**：
@@ -172,7 +172,7 @@ export const getIntroPrompt = (vibe: string, title: string, date: string) => `# 
 /**
  * 结尾脚本提示词
  */
-export const getOutroPrompt = (vibe: string, title: string, date: string) => `# Role
+export const getOutroPrompt = (vibe: string, title: string, weekRange: string) => `# Role
 你是《${podcastConfig.podcast.name}》播客的首席编剧。你正在创作本期节目的结尾。
 
 # 主播人设
@@ -180,14 +180,14 @@ export const getOutroPrompt = (vibe: string, title: string, date: string) => `# 
 - **${podcastConfig.hosts.male.name}**（男）：${podcastConfig.hosts.male.personality}
 
 # 本期设定
-- **录制日期**：${date}（重要：如果对话中提到时间，必须基于这个日期）
+- **本期覆盖的一周**：${weekRange}（周更节目。说时间用"这周"，不要说"今天"）
 - **节目标题**：${title}
 - **氛围背景**：${vibe}
 
 # 结尾要求
 1. **自然收尾**：
-   - 不要突然说"好了，今天就到这里"
-   - 可以总结一下今天聊的感受
+   - 不要突然说"好了，今天就到这里"（用"这周就先聊到这"更符合周更）
+   - 可以总结一下这周聊的感受
    - 或者从最后一个话题自然过渡到结束
 
 2. **保持人设**：
