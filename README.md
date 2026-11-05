@@ -57,7 +57,7 @@ tmux new -s hn-backfill 'bash scripts/vps-backfill.sh'
 bun run backfill:vps
 ```
 
-脚本会先打印待回填日期和编号，然后按顺序生成；失败会停下，重跑会跳过已完成日期。日志在 `apps/generator/.tmp/backfill-*.log`。
+脚本会先打印待回填日期和编号，然后按顺序生成。默认每期失败重试 3 次、间隔 60 秒；重试仍失败会停下，重跑会跳过已完成日期并从失败那天继续。日志在 `apps/generator/.tmp/backfill-*.log`。
 
 可选参数：
 
@@ -65,4 +65,9 @@ bun run backfill:vps
 bash scripts/vps-backfill.sh 2026-07-07      # 从指定周二开始
 SKIP_INSTALL=1 bash scripts/vps-backfill.sh  # 跳过 bun install
 REPO_DIR=/path/to/repo bash vps-backfill.sh  # 脚本放在仓库外时指定仓库路径
+
+BACKFILL_RETRIES=5 BACKFILL_RETRY_DELAY=120 bash scripts/vps-backfill.sh
+AUTO_PUSH=1 bash scripts/vps-backfill.sh     # 每期成功后自动 commit + push
 ```
+
+> `.env` 不在仓库里（已被 gitignore）。VPS 上必须单独创建 `apps/generator/.env`，不要把真实密钥提交到 git。

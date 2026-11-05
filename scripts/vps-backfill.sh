@@ -56,7 +56,18 @@ echo "== 日志: $LOG =="
 echo "== 预览 =="
 bun run backfill -- --from "$FROM" --dry-run | tee -a "$LOG"
 
+EXTRA=()
+if [ -n "${BACKFILL_RETRIES:-}" ]; then EXTRA+=(--retries "$BACKFILL_RETRIES"); fi
+if [ -n "${BACKFILL_RETRY_DELAY:-}" ]; then EXTRA+=(--retry-delay "$BACKFILL_RETRY_DELAY"); fi
+
 echo ""
 echo "== 开始回填 =="
-echo "中断后重跑会自动跳过已完成的日期。"
-bun run backfill -- --from "$FROM" 2>&1 | tee -a "$LOG"
+echo "每个日期失败会自动重试；进程中断后重跑会跳过已完成日期。"
+if [ "${AUTO_PUSH:-0}" = "1" ]; then
+  echo "AUTO_PUSH=1：每期成功后自动 commit + push。"
+fi
+if [ ${#EXTRA[@]} -eq 0 ]; then
+  bun run backfill -- --from "$FROM" 2>&1 | tee -a "$LOG"
+else
+  bun run backfill -- --from "$FROM" "${EXTRA[@]}" 2>&1 | tee -a "$LOG"
+fi
