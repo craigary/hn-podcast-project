@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "gen": "bun main.ts",
-    "sync-kv": "bun sync-kv.ts"
+    "backfill": "bun backfill.ts"
   },
   "dependencies": {
     "@ai-sdk/mistral": "^3.0.78",

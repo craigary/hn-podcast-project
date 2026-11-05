@@ -3,7 +3,7 @@ import { QuoteBatchSchema, getQuotePrompt } from '../ai/prompts/quotes'
 import type { ProcessedStory, ScreenedStory } from '../types'
 import { generateStructured } from '../utils/llm'
 
-const model = superlinked('Qwen/Qwen3.8-27B-FP8')
+const model = superlinked('deepseek-ai/DeepSeek-V4.1-Flash-1017')
 
 const buildContext = (stories: ScreenedStory[]) =>
   stories
@@ -20,7 +20,7 @@ ${story.highlights.join('\n').slice(0, 500) || '(无原话片段)'}
     )
     .join('\n---\n')
 
-/** Qwen 只有 8192 上下文，一次最多塞 6 条故事的摘要 + 原话片段 */
+/** 每批最多 6 条故事的摘要 + 原话片段；DeepSeek 上下文足够，分批只为控制单次输出 */
 const BATCH_SIZE = 6
 
 /**
@@ -44,9 +44,9 @@ const extractBatch = async (stories: ScreenedStory[]): Promise<ProcessedStory[]>
     model,
     schema: QuoteBatchSchema,
     system: getQuotePrompt(),
-    providerName: 'superlinked',
-    structuredMode: 'json_schema',
+    toolName: 'submit_intel',
     maxOutputTokens: 3000,
+    temperature: 0.2,
     prompt: `以下是 ${stories.length} 条被选中故事的摘要与原话片段，请为每一条输出冲突点与原话：
 
 ${buildContext(stories)}

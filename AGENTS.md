@@ -40,20 +40,23 @@ packages/
 
 ## 生成播客
 
-- `bun run gen`：自动生成下一期
-- `bun run gen -- --episode 15`：指定期数
-- `bun run gen -- --date 2026-02-20`：指定 HN 抓取日期
-- `bun run gen -- --episode 15 --force`：覆盖已有期数文件
+- `bun run gen`：生成最近一个周二（北京时间）的剧集
+- `bun run gen -- --date 2026-06-02`：指定发布日
+- `bun run gen -- --date 2026-06-02 --force`：覆盖同一期（复用原编号）
+- `bun run gen -- --date 2026-06-02 --dry-run`：只打印编号和内容窗口，不执行生成
+- `bun run gen -- --local`：本地调试，产物只写 `.tmp`，不写 content / 不上传 R2
+- `bun run backfill`：从 `2026-06-02` 起按周二回填缺失期数
+- `bun run backfill -- --dry-run`：预览回填日期与编号
 
 说明：
 
-- `--episode`、`--date`、`--force` 在 `apps/generator/main.ts` 中解析
-- 若未指定 `--date`，默认按 HN 时区策略取“昨天”
-- 新期 markdown 写入 `apps/web/src/content/episodes/{episode}.md`
+- `--date`、`--force`、`--local`、`--dry-run` 在 `apps/generator/main.ts` 中解析
+- 若未指定 `--date`，默认取最近一个已经到来的周二（北京时间）
+- 期号是发布序号，由 `apps/web/src/content/episodes/index.json` 分配；同一日期重跑复用原编号
+- 新期 markdown 写入 `apps/web/src/content/episodes/{number}.md`
 
 ## 辅助命令
 
-- `bun run sync-kv`：把本地最新期数同步到 Cloudflare KV
 - `bun run lint`：ESLint（带 `--fix`）
 - `bun run format`：Prettier
 
@@ -63,8 +66,8 @@ packages/
 
 执行顺序（高层）：
 
-1. 解析 CLI 参数，确定 `episode`/`date`，检查是否覆盖
-2. 从 HN Algolia 抓取候选故事（按日期 + points 过滤）
+1. 解析 CLI 参数，确定发布日，读取 `index.json` 分配/复用期号
+2. 从 HN Algolia 抓取候选故事（发布日前 7 天 + points 过滤）
 3. `screen`：用 Exa 抓 HN 详情页（text + summary + highlights），KV 缓存 7 天，不调用 LLM
 4. `blueprint`：基于摘要生成整期结构（分段、选题、氛围）
 4.5 `intel`：只对 blueprint 选中的故事批量提取「冲突 + 原话」（1 次 LLM 调用）
@@ -72,15 +75,15 @@ packages/
 6. `script`：生成 intro / segment / outro 对话脚本
 7. `tts`：Azure TTS 合成语音，FFmpeg 混音、转场、封面嵌入
 8. 上传 `audio.mp3`、`cover.png`、`script.json`、`blueprint.json` 到 R2
-9. 转换为 Astro content markdown，写入 `apps/web/src/content/episodes/`
-10. 更新 KV 最新期数（仅生成新期时）
+9. 转换为 Astro content markdown，写入 `apps/web/src/content/episodes/{number}.md`
+10. 发布成功后写入 `index.json`（失败或本地模式不消耗编号）
 
 产物路径（R2）：
 
-- `episodes/{date}/blueprint.json`
-- `episodes/{date}/script.json`
-- `episodes/{date}/cover.png`
-- `episodes/{date}/audio.mp3`
+- `episodes/{number}/blueprint.json`
+- `episodes/{number}/script.json`
+- `episodes/{number}/cover.png`
+- `episodes/{number}/audio.mp3`
 
 ## 4) 运行环境与外部依赖
 
@@ -92,11 +95,9 @@ packages/
 主要环境变量（生成器）：
 
 - AI：
-  - `MISTRAL_API_KEY`
-  - `NIM_API_KEY`
-  - `SILICONFLOW_API_KEY`
-  - `DEEPSEEK_API_KEY`
-  - `POLLINATIONS_API_KEY`
+  - `SUPERLINKED_API_KEY`（DeepSeek V4.1 Flash，主力模型）
+  - `EXA_API_KEY`（HN 页面抓取/摘要）
+  - `POLLINATIONS_API_KEY`（封面生成）
 - Cloudflare：
   - `CF_ACCOUNT_ID`
   - `CF_API_TOKEN`
@@ -108,8 +109,8 @@ packages/
 
 注意：
 
-- `apps/generator/sync-kv.ts` 只需要 KV 相关变量
 - 缺少 R2/KV/AI 任一关键变量都会导致对应步骤失败
+- 期号已改由 `apps/web/src/content/episodes/index.json` 维护，不再使用 KV `latest_episode_number`
 
 ## 5) Web 端要点（apps/web）
 
@@ -118,7 +119,7 @@ packages/
 - 内容 schema：`apps/web/src/content.config.ts`
 - 部署配置：`apps/web/wrangler.jsonc`（静态资产目录 `dist`）
 
-内容来源是 `src/content/episodes/*.md` frontmatter + transcript，修改 schema 时务必同步生成器 markdown 输出结构。
+内容来源是 `src/content/episodes/{number}.md` frontmatter + transcript；期号与发布日映射在 `src/content/episodes/index.json`。修改 schema 时务必同步生成器 markdown 输出结构。
 
 ## 6) 代码风格与约定
 
@@ -132,11 +133,9 @@ packages/
 GitHub Actions：
 
 - `/.github/workflows/generate-episode.yml`
-  - 定时任务每天 UTC 08:00
-  - 支持手动触发并传 `episode/date/force`
-  - 成功后自动提交 `apps/web/src/content/episodes/` 下新增或变更文件
-- `/.github/workflows/sync-kv.yml`
-  - 手动触发同步 KV 期数
+  - 定时任务每周二北京时间 07:30（UTC 周一 23:30）
+  - 支持手动触发并传 `date/force`
+  - 成功后自动提交 `apps/web/src/content/episodes/` 下新增或变更文件（含 `index.json`）
 
 ## 8) Agent 执行建议（重要）
 

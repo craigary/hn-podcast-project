@@ -30,9 +30,10 @@ export const generateCoverPrompt = async ({
   const title = blueprint.episode_overview.title
 
   const { text } = await generateText({
-    model: superlinked('Qwen/Qwen3.8-27B-FP8'),
+    model: superlinked('deepseek-ai/DeepSeek-V4.1-Flash-1017'),
     system: imageGenSystemPrompt,
     prompt: title,
+    temperature: 0.7,
   })
 
   const coverPrompt = text.trim()

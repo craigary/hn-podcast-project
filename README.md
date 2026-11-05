@@ -33,5 +33,36 @@
 - 开发站点：`bun run dev`
 - 构建站点：`bun run build`
 - 生成播客：`bun run gen`
-- 指定参数生成：`bun run gen -- --episode 15 --date 2026-02-20 --force`
-- 同步 KV：`bun run sync-kv`
+- 指定发布日生成/覆盖：`bun run gen -- --date 2026-06-02 --force`
+- 预览生成计划：`bun run gen -- --date 2026-06-02 --dry-run`
+- 回填缺失的周二：`bun run backfill`
+- 预览回填编号：`bun run backfill -- --dry-run`
+- VPS 一键回填：`bun run backfill:vps`
+
+## 在 VPS 上回填
+
+VPS 需要 Bun、`ffmpeg`、`ffprobe`，以及 `apps/generator/.env`（不要提交到 git）。
+
+```bash
+git clone <repo> hn-podcast-project
+cd hn-podcast-project
+
+# 从本地把 .env 复制到 VPS
+scp apps/generator/.env user@vps:/path/to/hn-podcast-project/apps/generator/.env
+
+# 建议放在 tmux 里跑，避免 SSH 断开
+tmux new -s hn-backfill 'bash scripts/vps-backfill.sh'
+
+# 或者直接跑
+bun run backfill:vps
+```
+
+脚本会先打印待回填日期和编号，然后按顺序生成；失败会停下，重跑会跳过已完成日期。日志在 `apps/generator/.tmp/backfill-*.log`。
+
+可选参数：
+
+```bash
+bash scripts/vps-backfill.sh 2026-07-07      # 从指定周二开始
+SKIP_INSTALL=1 bash scripts/vps-backfill.sh  # 跳过 bun install
+REPO_DIR=/path/to/repo bash vps-backfill.sh  # 脚本放在仓库外时指定仓库路径
+```

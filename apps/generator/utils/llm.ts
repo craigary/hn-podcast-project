@@ -1,109 +1,101 @@
-import { generateText } from 'ai'
+import { generateText, tool } from 'ai'
 import type { LanguageModel } from 'ai'
 import { z } from 'zod'
 
 /**
  * 结构化输出统一入口。
  *
- * 不走 AI SDK 的 Output.object：它直接对 content 做 JSON.parse，无法区分
- * 「输出不合法」和「网络失败」，也无法针对上游上下文超限自动收缩重试。
+ * Superlinked 的 DeepSeek 不支持 response_format（json_schema / json_object 都会 400），
+ * 所以这里用 tool calling 作为唯一的结构化通道：
+ * 1. 强制模型调用指定工具；
+ * 2. 工具参数就是 zod schema；
+ * 3. 解析失败或内容校验失败时，带着错误信息重试一次。
+ *
+ * 连续两次失败直接抛错，由上层决定整期失败，不做静默降级。
  */
+
+const TOOL_SUFFIX = (toolName: string) => `
+# 输出方式（必须严格遵守）
+你必须调用工具 ${toolName} 提交结果，不要直接输出 JSON 文本，不要输出解释。
+工具参数必须完全符合 schema。
+所有字符串值内部禁止使用英文双引号 "；引用、强调、书名号等一律使用中文引号「」。
+不要输出 markdown 代码块、注释或任何额外文本。`.trim()
+
 export const generateStructured = async <S extends z.ZodType>(params: {
   model: LanguageModel
   schema: S
   system: string
   prompt: string
-  providerName: string
+  toolName: string
   maxOutputTokens?: number
-  /**
-   * 'json_schema' = 上游约束解码（严格，Qwen）
-   * 'json_object' = 上游只保证「合法 JSON」，字段靠 prompt 约束（DeepSeek 官方）
-   */
-  structuredMode?: 'json_schema' | 'json_object'
+  temperature?: number
+  maxAttempts?: number
+  /** 额外的内容校验；抛错会触发重试 */
+  validate?: (value: z.infer<S>) => void
 }): Promise<z.infer<S>> => {
   const {
     model,
     schema,
     system,
     prompt,
-    providerName,
-    maxOutputTokens,
-    structuredMode = 'json_schema',
+    toolName,
+    maxOutputTokens = 8000,
+    temperature = 0.2,
+    maxAttempts = 2,
+    validate,
   } = params
 
-  const jsonSchema = z.toJSONSchema(schema) as Record<string, unknown>
-
-  const providerOptions = {
-    [providerName]: {
-      response_format:
-        structuredMode === 'json_schema'
-          ? {
-              type: 'json_schema' as const,
-              json_schema: { name: 'result', strict: true, schema: jsonSchema },
-            }
-          : { type: 'json_object' as const },
-    },
+  const tools = {
+    [toolName]: tool({
+      description: `提交 ${toolName} 的结构化结果`,
+      inputSchema: schema,
+    }),
   }
 
-  // 非约束解码时把 schema 写进 system prompt。
-  // DeepSeek 官方要求 prompt 里必须出现 "json" 字样并给出格式样例，否则 json_object 不可靠。
-  const systemPrompt =
-    structuredMode === 'json_schema'
-      ? system
-      : `${system}
+  let lastError: unknown
+  let repairNote = ''
 
-# 输出格式（必须严格遵守）
-只输出一个 json 对象，不要包裹代码块，不要输出任何解释文字。
-字段名与类型必须与下面的 JSON Schema 完全一致，示例结构如下：
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const result = await generateText({
+        model,
+        system: `${system}\n\n${TOOL_SUFFIX(toolName)}${repairNote}`,
+        prompt,
+        tools,
+        toolChoice: { type: 'tool', toolName },
+        maxOutputTokens,
+        temperature,
+      })
 
-${JSON.stringify(jsonSchema)}
+      const call = result.toolCalls.find((item) => item.toolName === toolName)
+      if (!call) {
+        throw new Error(
+          `模型没有调用工具 ${toolName}，返回文本：${result.text.slice(0, 300) || '(空)'}`
+        )
+      }
+      if ('invalid' in call && call.invalid) {
+        throw new Error(`工具参数不合法：${String('error' in call ? call.error : 'unknown')}`)
+      }
 
-请直接输出 json。`
+      const parsed = schema.safeParse(call.input)
+      if (!parsed.success) {
+        throw new Error(`工具参数不符合 schema：${JSON.stringify(parsed.error.issues.slice(0, 3))}`)
+      }
 
-  const call = (maxTokens: number | undefined) =>
-    generateText({
-      model,
-      system: systemPrompt,
-      prompt,
-      maxOutputTokens: maxTokens,
-      // providerOptions 的 key 是动态 provider 名，类型上只能放宽
-      providerOptions: providerOptions as Parameters<typeof generateText>[0]['providerOptions'],
-    })
-
-  let text: string
-  try {
-    text = (await call(maxOutputTokens)).text
-  } catch (error) {
-    // 上游上下文按真实 token 算，prompt 太长会 400。按它报的数字收缩后重试一次。
-    const message = String((error as Error).message ?? '')
-    const overflow = message.match(
-      /prompt_tokens \((\d+)\) \+ max_new_tokens \((\d+)\) = \d+ exceeds context_length \((\d+)\)/
-    )
-    if (!overflow) throw error
-
-    const promptTokens = Number(overflow[1])
-    const limit = Number(overflow[3])
-    const shrunk = limit - promptTokens - 100
-    if (shrunk < 400) {
-      throw new Error(
-        `prompt 实际 ${promptTokens} tokens，已占满上游上下文 ${limit}，无法容纳输出，需要精简输入`
+      if (validate) validate(parsed.data)
+      return parsed.data as z.infer<S>
+    } catch (error) {
+      lastError = error
+      console.warn(
+        `⚠️  ${toolName} 第 ${attempt}/${maxAttempts} 次失败：${(error as Error).message}`
       )
+      repairNote = `
+
+# 上一次失败原因
+${(error as Error).message}
+请重新调用 ${toolName}，只提交修正后的完整结果。`
     }
-    console.warn(`⚠️  上下文超限，把 max_tokens 收缩到 ${shrunk} 后重试`)
-    text = (await call(shrunk)).text
   }
 
-  // DeepSeek json_object 的已知行为：无法识别为 JSON 时，非 JSON 内容会被替换成空格，
-  // content 可能只剩空白且 finish_reason 仍是 stop。当成可重试错误抛出去。
-  if (!text.trim()) {
-    throw new Error(
-      '模型返回了空的 content（json_object 模式下通常意味着输出不是合法 JSON），需要重试'
-    )
-  }
-
-  const parsed = schema.safeParse(JSON.parse(text))
-  if (!parsed.success) {
-    throw new Error(`输出不符合 schema: ${JSON.stringify(parsed.error.issues.slice(0, 3))}`)
-  }
-  return parsed.data as z.infer<S>
+  throw lastError instanceof Error ? lastError : new Error(`${toolName} 生成失败`)
 }

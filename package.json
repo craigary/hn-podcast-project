@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "gen": "bun run --cwd apps/generator gen",
-    "sync-kv": "bun run --cwd apps/generator sync-kv",
+    "backfill": "bun run --cwd apps/generator backfill",
+    "backfill:vps": "bash scripts/vps-backfill.sh",
     "dev": "bun run --cwd apps/web dev",
     "build": "bun run --cwd apps/web build",
     "preview": "bun run --cwd apps/web preview",

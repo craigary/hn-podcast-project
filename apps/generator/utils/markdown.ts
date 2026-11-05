@@ -6,7 +6,7 @@ import { generateStructured } from './llm'
 import { z } from 'zod'
 import { processText } from './text'
 
-const model = superlinked('Qwen/Qwen3.8-27B-FP8')
+const model = superlinked('deepseek-ai/DeepSeek-V4.1-Flash-1017')
 
 // Chapter 类型定义
 interface Chapter {
@@ -39,17 +39,17 @@ async function generateChapters(
   const introLines = fullScript.intro.lines
   if (introLines.length > 0) {
     const lastIntroLine = introLines[introLines.length - 1]
-    currentTime = lastIntroLine.end || 0
+    currentTime = lastIntroLine?.end ?? 0
   }
 
   // 为每个 segment 生成 chapter
   for (let i = 0; i < blueprint.segments.length; i++) {
-    const segment = blueprint.segments[i]
-    const segmentScript = fullScript.segments[i]
+    const segment = blueprint.segments[i]!
+    const segmentScript = fullScript.segments[i]!
 
     // 获取该 segment 的起始时间
     const segmentLines = segmentScript.lines
-    const startTime = segmentLines.length > 0 ? segmentLines[0].start || currentTime : currentTime
+    const startTime = segmentLines[0]?.start ?? currentTime
 
     // 提取该 segment 的对话内容（用于 AI 总结）
     const dialogueText = segmentLines.map((line) => `${line.speaker}: ${line.text}`).join('\n')
@@ -68,11 +68,11 @@ async function generateChapters(
     while (retryCount < maxRetries && !success) {
       try {
         const output = await generateStructured({
-          model: model,
+          model,
           schema: ChapterSummarySchema,
-          providerName: 'superlinked',
-          structuredMode: 'json_schema',
+          toolName: 'submit_chapter',
           maxOutputTokens: 800,
+          temperature: 0.2,
           system: `你是一个播客章节总结专家。请根据对话内容生成简短、吸引人的章节标题和描述。
 
 要求：
@@ -126,7 +126,7 @@ ${dialogueText.slice(0, 2000)}
     // 更新当前时间
     if (segmentLines.length > 0) {
       const lastLine = segmentLines[segmentLines.length - 1]
-      currentTime = lastLine.end || currentTime
+      currentTime = lastLine?.end ?? currentTime
     }
   }
 

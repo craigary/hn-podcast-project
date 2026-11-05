@@ -3,17 +3,19 @@ import type { RawStory } from '../types'
 const HN_ALGOLIA = 'https://hn.algolia.com/api/v1'
 
 /**
- * 抓一周的 HN 热门故事。
- * @param weekEnd 该周最后一天（YYYY-MM-DD），区间为 weekEnd 往前数 7 天。
+ * 抓取一个发布窗口内的 HN 热门故事。
+ * 日期按北京时间解释：startDate 00:00 至 endDate 23:59。
  * 结果按 points 降序，取前 30 条作为候选。
  */
-export const fetchWeeklyTopStories = async (weekEnd: string): Promise<RawStory[]> => {
-  const end = new Date(`${weekEnd}T23:59:59Z`)
-  const start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000 + 1000)
-  start.setUTCHours(0, 0, 0, 0)
-
-  const startTs = Math.floor(start.getTime() / 1000)
-  const endTs = Math.floor(end.getTime() / 1000)
+export const fetchWeeklyTopStories = async ({
+  startDate,
+  endDate,
+}: {
+  startDate: string
+  endDate: string
+}): Promise<RawStory[]> => {
+  const startTs = Math.floor(new Date(`${startDate}T00:00:00+08:00`).getTime() / 1000)
+  const endTs = Math.floor(new Date(`${endDate}T23:59:59+08:00`).getTime() / 1000)
 
   // 周更用 points>200 做门槛：一周 points>50 有 470 条，噪声太多
   const url =

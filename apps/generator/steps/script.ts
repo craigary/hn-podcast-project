@@ -1,6 +1,5 @@
 // src/steps/script.ts
 
-import { generateText } from 'ai'
 import type { PodcastBlueprint } from '../ai/prompts/blueprint'
 import type { ProcessedStory } from '../types'
 
@@ -12,14 +11,14 @@ import {
   type SegmentScript,
 } from '../ai/prompts/script'
 import { fetchPageContent, getCachedPage } from '../utils/exa'
-import { deepseek } from '../ai/deepseek'
+import { superlinked } from '../ai/superlinked'
 import { processText } from '../utils/text'
-import { assertScript, withRetry } from '../utils/validate'
+import { assertScript } from '../utils/validate'
 import { generateStructured } from '../utils/llm'
 
-// 脚本每段 15-30 轮对话，prompt 常超过 Qwen 的 8192 上下文；
-// 这里用官方 DeepSeek（1M 上下文），结构化输出走 prompt 模式（官方 API 只支持 json_object）
-const model = deepseek('deepseek-flash')
+// 脚本每段 15-30 轮对话，prompt 很长；使用 Superlinked 的 DeepSeek（1M 上下文）。
+// 结构化输出走 tool calling，因为该模型不支持 response_format。
+const model = superlinked('deepseek-ai/DeepSeek-V4.1-Flash-1017')
 
 /** 抓外部文章时追问的摘要方向 */
 const ARTICLE_SUMMARY_QUERY =
@@ -122,25 +121,21 @@ ${storiesContext}
 
   const expected = SEGMENT_LINES[segment.segment_type] ?? { minLines: 10 }
 
-  const output = await withRetry(
-    () =>
-      generateStructured({
-        model,
-        schema: SegmentScriptSchema,
-        system: getScriptPrompt(
-          segment.segment_type,
-          segment.host_dynamic,
-          episodeOverview.vibe,
-          weekRange
-        ),
-        prompt,
-        providerName: 'deepseek',
-        structuredMode: 'json_object',
-        maxOutputTokens: 8000,
-      }),
-    (script) => assertScript(script, `Segment ${segmentIndex + 1}`, expected),
-    { label: `Segment ${segmentIndex + 1} 脚本` }
-  )
+  const output = await generateStructured({
+    model,
+    schema: SegmentScriptSchema,
+    system: getScriptPrompt(
+      segment.segment_type,
+      segment.host_dynamic,
+      episodeOverview.vibe,
+      weekRange
+    ),
+    prompt,
+    toolName: 'submit_script',
+    maxOutputTokens: 8000,
+    temperature: 0.2,
+    validate: (script) => assertScript(script, `Segment ${segmentIndex + 1}`, expected),
+  })
 
   output.lines = output.lines.map((line) => ({ ...line, text: processText(line.text) }))
   console.log(`✅ Segment ${segmentIndex + 1} 脚本生成成功 (${output.lines.length} 轮对话)`)
@@ -156,26 +151,22 @@ export const generateIntroScript = async ({
 }): Promise<SegmentScript> => {
   console.log(`🎬 生成开场脚本...`)
 
-  const output = await withRetry(
-    () =>
-      generateStructured({
-        model,
-        schema: SegmentScriptSchema,
-        system: getIntroPrompt(episodeOverview.vibe, episodeOverview.title, weekRange),
-        prompt: `请创作本期节目的开场对话。
+  const output = await generateStructured({
+    model,
+    schema: SegmentScriptSchema,
+    system: getIntroPrompt(episodeOverview.vibe, episodeOverview.title, weekRange),
+    prompt: `请创作本期节目的开场对话。
 
 要求：
 - 从氛围背景自然切入
-- 介绍今天的主题：${episodeOverview.title}
+- 介绍本期的主题：${episodeOverview.title}
 - 保持轻松、自然的对话风格
 - 6-10 轮对话`,
-        providerName: 'deepseek',
-        structuredMode: 'json_object',
-        maxOutputTokens: 8000,
-      }),
-    (script) => assertScript(script, '开场脚本', { minLines: 4 }),
-    { label: '开场脚本' }
-  )
+    toolName: 'submit_script',
+    maxOutputTokens: 8000,
+    temperature: 0.2,
+    validate: (script) => assertScript(script, '开场脚本', { minLines: 4 }),
+  })
 
   output.lines = output.lines.map((line) => ({ ...line, text: processText(line.text) }))
   console.log(`✅ 开场脚本生成成功 (${output.lines.length} 轮对话)`)
@@ -191,26 +182,22 @@ export const generateOutroScript = async ({
 }): Promise<SegmentScript> => {
   console.log(`🎬 生成结尾脚本...`)
 
-  const output = await withRetry(
-    () =>
-      generateStructured({
-        model,
-        schema: SegmentScriptSchema,
-        system: getOutroPrompt(episodeOverview.vibe, episodeOverview.title, weekRange),
-        prompt: `请创作本期节目的结尾对话。
+  const output = await generateStructured({
+    model,
+    schema: SegmentScriptSchema,
+    system: getOutroPrompt(episodeOverview.vibe, episodeOverview.title, weekRange),
+    prompt: `请创作本期节目的结尾对话。
 
 要求：
 - 自然地收尾，不要太正式
-- 可以简单总结今天的感受
+- 可以简单总结这周的感受
 - 保持人设，轻松告别
 - 6-10 轮对话`,
-        providerName: 'deepseek',
-        structuredMode: 'json_object',
-        maxOutputTokens: 8000,
-      }),
-    (script) => assertScript(script, '结尾脚本', { minLines: 3 }),
-    { label: '结尾脚本' }
-  )
+    toolName: 'submit_script',
+    maxOutputTokens: 8000,
+    temperature: 0.2,
+    validate: (script) => assertScript(script, '结尾脚本', { minLines: 3 }),
+  })
 
   output.lines = output.lines.map((line) => ({ ...line, text: processText(line.text) }))
   console.log(`✅ 结尾脚本生成成功 (${output.lines.length} 轮对话)`)
