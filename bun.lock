@@ -7,7 +7,7 @@
       "devDependencies": {
         "oxfmt": "^0.76.0",
         "oxlint": "^1.91.0",
-        "sharp": "^0.34.5",
+        "typescript": "^5.9.3",
       },
     },
     "apps/generator": {
@@ -44,6 +44,7 @@
         "@astrojs/check": "^0.9.12",
         "@iconify-json/lucide": "^1.2.149",
         "@iconify-json/simple-icons": "^1.2.101",
+        "sharp": "^0.34.5",
         "typescript": "^5.9.3",
         "unplugin-icons": "^23.0.1",
         "wrangler": "^4.156.0",

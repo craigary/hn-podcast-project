@@ -2,8 +2,16 @@
   "name": "@hn/config",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.ts",
   "private": true,
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    }
+  },
+  "files": [
+    "index.ts"
+  ],
   "devDependencies": {
     "@types/node": "^25.9.9"
   }

@@ -8,17 +8,19 @@
     "packages/*"
   ],
   "scripts": {
-    "gen": "bun run --cwd apps/generator gen",
-    "backfill": "bun run --cwd apps/generator backfill",
+    "gen": "bun run --filter generator gen",
+    "backfill": "bun run --filter generator backfill",
     "backfill:vps": "bash scripts/vps-backfill.sh",
-    "dev": "bun run --cwd apps/web dev",
-    "build": "bun run --cwd apps/web build",
-    "deploy": "bun run --cwd apps/web deploy",
-    "preview": "bun run --cwd apps/web preview",
+    "dev": "bun run --filter web dev",
+    "build": "bun run --filter web build",
+    "deploy": "bun run --filter web deploy",
+    "preview": "bun run --filter web preview",
+    "typecheck": "tsc --noEmit -p apps/generator/tsconfig.json && tsc --noEmit -p packages/config/tsconfig.json && bun run --filter web check",
     "lint": "oxlint",
-    "format": "oxfmt",
     "lint:fix": "oxlint --fix",
-    "format:check": "oxfmt --check"
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "check": "bun run lint && bun run format:check && bun run typecheck"
   },
   "overrides": {
     "vite": "^8.0.0"
@@ -35,6 +37,6 @@
   "devDependencies": {
     "oxfmt": "^0.76.0",
     "oxlint": "^1.91.0",
-    "sharp": "^0.34.5"
+    "typescript": "^5.9.3"
   }
 }

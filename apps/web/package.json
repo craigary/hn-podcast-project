@@ -3,12 +3,13 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "deploy": "wrangler deploy",
-    "preview": "astro preview",
     "astro": "astro",
-    "generate-types": "wrangler types"
+    "build": "astro build",
+    "check": "astro check",
+    "deploy": "wrangler deploy",
+    "dev": "astro dev",
+    "generate-types": "wrangler types",
+    "preview": "astro preview"
   },
   "dependencies": {
     "@astrojs/rss": "4.0.19",
@@ -22,6 +23,7 @@
     "@astrojs/check": "^0.9.12",
     "@iconify-json/lucide": "^1.2.149",
     "@iconify-json/simple-icons": "^1.2.101",
+    "sharp": "^0.34.5",
     "typescript": "^5.9.3",
     "unplugin-icons": "^23.0.1",
     "wrangler": "^4.156.0"

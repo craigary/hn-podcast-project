@@ -94,7 +94,8 @@ class AudioPlayerController {
   }
 
   private toCamelCase(str: string) {
-    return str.replace(/-([a-z])/g, (g) => g[1].toUpperCase())
+    // 正则保证第 1 个捕获组一定存在
+    return str.replace(/-([a-z])/g, (g) => g[1]!.toUpperCase())
   }
 
   private bindAudioEvents() {

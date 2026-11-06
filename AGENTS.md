@@ -59,6 +59,8 @@ packages/
 
 - `bun run lint`：oxlint（`bun run lint:fix` 自动修复）
 - `bun run format`：oxfmt（`bun run format:check` 只检查）
+- `bun run typecheck`：generator / config 的 tsc + web 的 astro check
+- `bun run check`：lint + format:check + typecheck，提交前跑这一个就够
 
 ## 3) 生成流水线（apps/generator）
 
@@ -123,6 +125,7 @@ packages/
 
 ## 6) 代码风格与约定
 
+- TypeScript 选项统一继承根目录 `tsconfig.base.json`，各包只写自己的差异
 - 全仓库统一 oxfmt（配置见 `.oxfmtrc.json`）：`singleQuote: true`、`semi: false`、`printWidth: 100`
 - `.astro` 文件目前不参与自动化格式化，改动时手写对齐现有风格
 - 生成器代码以 ESM `import` 为主，保持无分号风格
