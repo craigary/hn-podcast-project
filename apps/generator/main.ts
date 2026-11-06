@@ -26,6 +26,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 function parseArgs() {
   const args = process.argv.slice(2)
   let date: string | undefined
+  let episode: number | undefined
   let force = false
   let local = false
   let dryRun = false
@@ -37,6 +38,13 @@ function parseArgs() {
     if (arg === '--date' && value) {
       date = value
       i++
+    } else if (arg === '--episode' && value) {
+      const parsed = Number(value)
+      if (!Number.isInteger(parsed) || parsed <= 0) {
+        throw new Error(`--episode 必须是正整数，收到: ${value}`)
+      }
+      episode = parsed
+      i++
     } else if (arg === '--force' || arg === '-f') {
       force = true
     } else if (arg === '--local' || arg === '-l') {
@@ -47,36 +55,65 @@ function parseArgs() {
     }
   }
 
-  return { date, force, local, dryRun }
+  if (date && episode !== undefined) {
+    throw new Error('--date 和 --episode 只能选一个：重跑某一期用 --episode，指定日期用 --date')
+  }
+
+  return { date, episode, force, local, dryRun }
 }
 
 // 主函数
 async function main() {
-  const { date: argDate, force, local, dryRun } = parseArgs()
+  const { date: argDate, episode: argEpisode, force, local, dryRun } = parseArgs()
 
-  // 默认取最近一个已经到来的周二（北京时间）；手动传 --date 可补生成指定某期
-  const publishDate = argDate ?? getLatestTuesday()
-  if (!DATE_RE.test(publishDate)) {
-    throw new Error(`--date 必须是 YYYY-MM-DD，收到: ${publishDate}`)
+  const index = await readEpisodeIndex()
+
+  // 优先用 --date；给 --episode 时从索引里反查它的发布日
+  let publishDate: string
+  if (argDate) {
+    publishDate = argDate
+  } else if (argEpisode !== undefined) {
+    const entry = index.episodes.find((episode) => episode.number === argEpisode)
+    if (!entry) {
+      const range = index.episodes.length
+        ? `EP${index.episodes[0]!.number}–EP${index.episodes[index.episodes.length - 1]!.number}`
+        : '（索引为空）'
+      throw new Error(`--episode ${argEpisode} 不在索引里，现有范围 ${range}`)
+    }
+    publishDate = entry.date
+  } else {
+    // 默认取最近一个已经到来的周二（北京时间）
+    publishDate = getLatestTuesday()
   }
+
+  if (!DATE_RE.test(publishDate)) {
+    throw new Error(`发布日必须是 YYYY-MM-DD，收到: ${publishDate}`)
+  }
+
+  // 指定某一期就是重跑，默认覆盖
+  const forced = force || argEpisode !== undefined
 
   const { startDate, endDate } = getPublishWindow(publishDate)
   const weekRange = getWeekRangeLabel(publishDate)
 
-  const index = await readEpisodeIndex()
   const { number: episodeNumber, existing } = resolveEpisodeNumber(index, publishDate)
 
   const lastPublished = index.episodes[index.episodes.length - 1]
-  if (!argDate && lastPublished && lastPublished.date < addDays(publishDate, -7)) {
+  if (
+    !argDate &&
+    argEpisode === undefined &&
+    lastPublished &&
+    lastPublished.date < addDays(publishDate, -7)
+  ) {
     console.warn(`⚠️  上一期是 ${lastPublished.date}，中间可能还有未生成的周二。`)
-    console.warn(`   补某一期：bun run gen -- --date <YYYY-MM-DD> --dry-run`)
+    console.warn(`   补某一期：bun run gen -- --episode <期号> --dry-run`)
   }
 
   console.log(`\n📻 发布日 ${publishDate} / Episode ${episodeNumber}`)
   console.log(`✓ 内容窗口: ${weekRange}（北京时间）`)
   console.log(
     existing
-      ? `✓ 该日期已存在：EP${episodeNumber}${force ? '，将强制重新生成' : ''}`
+      ? `✓ 该日期已存在：EP${episodeNumber}${forced ? '，将强制重新生成' : ''}`
       : `✓ 新期：分配 EP${episodeNumber}`
   )
 
@@ -85,7 +122,7 @@ async function main() {
     return
   }
 
-  if (existing && !force) {
+  if (existing && !forced) {
     console.log(`\n⚠️  ${publishDate} 已存在（EP${episodeNumber}），跳过。`)
     console.log(`提示：使用 --force 强制重新生成\n`)
     return

@@ -6,6 +6,10 @@ on:
     - cron: '30 23 * * 1'
   workflow_dispatch:
     inputs:
+      episode:
+        description: '期号，例如 114（会复用该编号并覆盖重跑，优先级高于 date）'
+        required: false
+        type: string
       date:
         description: '发布日 YYYY-MM-DD（留空则自动取最近一个周二）'
         required: false
@@ -49,12 +53,16 @@ jobs:
       - name: 生成播客剧集
         run: |
           ARGS=()
+          if [ -n "${{ inputs.episode }}" ]; then
+            ARGS+=(--episode "${{ inputs.episode }}")
+          fi
           if [ -n "${{ inputs.date }}" ]; then
             ARGS+=(--date "${{ inputs.date }}")
           fi
           if [ "${{ inputs.force }}" = "true" ]; then
             ARGS+=(--force)
           fi
+          echo "生成参数: ${ARGS[*]:-（无，按最近周二）}"
           bun run gen -- "${ARGS[@]}"
         env:
           SUPERLINKED_API_KEY: ${{ secrets.SUPERLINKED_API_KEY }}
@@ -77,8 +85,13 @@ jobs:
           if git diff --cached --quiet; then
             echo "没有新剧集生成，跳过提交"
           else
-            EPISODE_FILE=$(git diff --cached --name-only | head -1)
-            git commit -m "🎙️ 自动生成新播客剧集: ${EPISODE_FILE}
+            if [ -n "${{ inputs.episode }}" ]; then
+              TITLE="🎙️ 重新生成 EP${{ inputs.episode }}"
+            else
+              EPISODE_FILE=$(git diff --cached --name-only | head -1)
+              TITLE="🎙️ 自动生成新播客剧集: ${EPISODE_FILE}"
+            fi
+            git commit -m "${TITLE}
 
           Co-authored-by: Craig Hart <i@craigary.net>"
             git fetch origin "${BRANCH}"

@@ -34,6 +34,7 @@
 - 构建站点：`bun run build`
 - 部署站点：`bun run deploy`
 - 生成播客：`bun run gen`
+- 重跑某一期：`bun run gen -- --episode 114`
 - 指定发布日生成/覆盖：`bun run gen -- --date 2026-06-02 --force`
 - 预览生成计划：`bun run gen -- --date 2026-06-02 --dry-run`
 - 本地调试（只写 .tmp，不上传）：`bun run gen -- --local --force`
@@ -41,24 +42,32 @@
 
 ## 补生成某一期
 
-线上某一期失败时（比如某个 API 临时抽风），本地用同一日期重跑一次就行，期号会复用原来的，不会多占编号：
+线上某一期失败时（比如某个 API 临时抽风），直接给期号重跑，编号和发布日都从 `index.json` 反查，不会多占编号：
+
+```bash
+bun run gen -- --episode 114
+```
+
+也可以用发布日指定：
 
 ```bash
 bun run gen -- --date 2026-11-03 --force
 ```
 
-`--force` 会覆盖 `apps/web/src/content/episodes/114.md`，并重新上传 R2 上的音频和封面；文件地址里的 `?v=` 版本号会跟着变，听众的播放器不会拿到旧缓存。
+`--episode` 自带覆盖语义，不用再加 `--force`；`--date` 则需要显式加 `--force` 才会重跑已存在的日期。`--episode` 和 `--date` 只能给一个。
+
+覆盖时会重写 `apps/web/src/content/episodes/114.md`，并重新上传 R2 上的音频和封面；文件地址里的 `?v=` 版本号会跟着变，听众的播放器不会拿到旧缓存。
 
 只想看期号和内容窗口，不真的生成：
 
 ```bash
-bun run gen -- --date 2026-11-03 --dry-run
+bun run gen -- --episode 114 --dry-run
 ```
 
 只想在本地听效果，不碰线上任何东西：
 
 ```bash
-bun run gen -- --date 2026-11-03 --local --force
+bun run gen -- --episode 114 --local
 ```
 
 运行前需要两份东西：`apps/generator/.env`（Bun 会按工作目录自动加载，不要提交到 git），以及系统里可用的 `ffmpeg` / `ffprobe`。

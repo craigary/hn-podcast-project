@@ -41,6 +41,7 @@ packages/
 ## 生成播客
 
 - `bun run gen`：生成最近一个周二（北京时间）的剧集
+- `bun run gen -- --episode 114`：按期号重跑（发布日从 index.json 反查，自带覆盖）
 - `bun run gen -- --date 2026-06-02`：指定发布日
 - `bun run gen -- --date 2026-06-02 --force`：覆盖同一期（复用原编号）
 - `bun run gen -- --date 2026-06-02 --dry-run`：只打印编号和内容窗口，不执行生成
@@ -48,7 +49,8 @@ packages/
 
 说明：
 
-- `--date`、`--force`、`--local`、`--dry-run` 在 `apps/generator/main.ts` 中解析
+- `--date`、`--episode`、`--force`、`--local`、`--dry-run` 在 `apps/generator/main.ts` 中解析
+- `--episode` 与 `--date` 互斥；`--episode` 自带 `--force` 语义
 - 若未指定 `--date`，默认取最近一个已经到来的周二（北京时间）
 - 期号是发布序号，由 `apps/web/src/content/episodes/index.json` 分配；同一日期重跑复用原编号
 - 新期 markdown 写入 `apps/web/src/content/episodes/{number}.md`
