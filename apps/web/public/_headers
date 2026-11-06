@@ -1,0 +1,9 @@
+# Cloudflare Workers 静态资源响应头
+# 指纹资源（/_astro 下带 hash 的文件名）内容变了地址就变，可以长期缓存。
+# 其余路径沿用 Workers 默认的 public, max-age=0, must-revalidate，保证新一期立刻可见。
+
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/font/*
+  Cache-Control: public, max-age=31536000, immutable

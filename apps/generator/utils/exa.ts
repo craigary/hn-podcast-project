@@ -57,7 +57,9 @@ export const fetchPageContent = async (
 
   if (!res.ok) {
     const detail = await res.text().catch(() => '')
-    throw new Error(`Exa 抓取失败 ${res.status} ${res.statusText}: ${detail.slice(0, 200)} (${url})`)
+    throw new Error(
+      `Exa 抓取失败 ${res.status} ${res.statusText}: ${detail.slice(0, 200)} (${url})`
+    )
   }
 
   const data = (await res.json()) as { results?: ExaResult[] }

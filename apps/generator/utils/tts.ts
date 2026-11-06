@@ -417,12 +417,12 @@ export const generatePodcastAudio = async (
 
   // --- 生成最终时间轴和 FFmpeg 输入 ---
   let globalCurrentTime = 0
-  const finalTimelines: Map<string, { start: number; end: number }[]> = new Map()
   let introTimeline: { start: number; end: number }[] = []
   let outroTimeline: { start: number; end: number }[] = []
-  const segmentTimelines: { start: number; end: number }[][] = new Array(
-    fullScript.segments.length
-  ).fill([])
+  const segmentTimelines: { start: number; end: number }[][] = Array.from(
+    { length: fullScript.segments.length },
+    () => []
+  )
 
   // 遍历 clips 计算时间轴
   // 注意：这里的 currentTime 是累加的
@@ -433,10 +433,7 @@ export const generatePodcastAudio = async (
       globalCurrentTime += clip.duration
     } else if (clip.kind === 'voice') {
       // 计算该段语音内部的准确时间轴，并加上当前的 globalCurrentTime 偏移
-      const timestamps = calculateSectionTimestamps(
-        clip.results,
-        globalCurrentTime
-      )
+      const timestamps = calculateSectionTimestamps(clip.results, globalCurrentTime)
 
       // 保存时间轴
       if (clip.sectionRef === 'intro') introTimeline = timestamps

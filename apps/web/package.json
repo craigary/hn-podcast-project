@@ -11,10 +11,10 @@
     "generate-types": "wrangler types"
   },
   "dependencies": {
-    "@astrojs/rss": "4.0.15-beta.3",
+    "@astrojs/rss": "4.0.19",
     "@hn/config": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "6.0.0-beta.14",
+    "astro": "7.4.7",
     "marked": "^17.0.6",
     "tailwindcss": "^4.3.3"
   },

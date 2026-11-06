@@ -57,8 +57,8 @@ packages/
 
 ## 辅助命令
 
-- `bun run lint`：ESLint（带 `--fix`）
-- `bun run format`：Prettier
+- `bun run lint`：oxlint（`bun run lint:fix` 自动修复）
+- `bun run format`：oxfmt（`bun run format:check` 只检查）
 
 ## 3) 生成流水线（apps/generator）
 
@@ -70,7 +70,7 @@ packages/
 2. 从 HN Algolia 抓取候选故事（发布日前 7 天 + points 过滤）
 3. `screen`：用 Exa 抓 HN 详情页（text + summary + highlights），KV 缓存 7 天，不调用 LLM
 4. `blueprint`：基于摘要生成整期结构（分段、选题、氛围）
-4.5 `intel`：只对 blueprint 选中的故事批量提取「冲突 + 原话」（1 次 LLM 调用）
+   4.5 `intel`：只对 blueprint 选中的故事批量提取「冲突 + 原话」（1 次 LLM 调用）
 5. `image`：生成封面提示词，用 Workers AI（FLUX.2 Dev）出图，失败回落默认封面
 6. `script`：生成 intro / segment / outro 对话脚本
 7. `tts`：Azure TTS 合成语音，FFmpeg 混音、转场、封面嵌入
@@ -123,7 +123,8 @@ packages/
 
 ## 6) 代码风格与约定
 
-- 全仓库统一 Prettier：`singleQuote: true`、`semi: false`
+- 全仓库统一 oxfmt（配置见 `.oxfmtrc.json`）：`singleQuote: true`、`semi: false`、`printWidth: 100`
+- `.astro` 文件目前不参与自动化格式化，改动时手写对齐现有风格
 - 生成器代码以 ESM `import` 为主，保持无分号风格
 - 站点 UI 文案和注释以中文（zh-CN）为主，新增内容保持一致语境
 - 不要无意义重排现有 episode 内容文件；它们是发布内容的一部分

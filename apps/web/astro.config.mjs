@@ -8,9 +8,11 @@ import { podcastConfig } from '@hn/config'
 export default defineConfig({
   output: 'static',
   site: podcastConfig.site.url,
+  // v7 默认按 JSX 规则压缩空白，行内元素之间会丢空格；保持 v6 的 HTML 规则
+  compressHTML: true,
   image: {
     domains: ['pub-db52adfc769f4b65b2c8fcf9f5cfc414.r2.dev'],
-    remotePatterns: [{ protocol: 'https' }]
+    remotePatterns: [{ protocol: 'https' }],
   },
   vite: {
     plugins: [
@@ -18,8 +20,8 @@ export default defineConfig({
       tailwindcss(),
       // @ts-ignore - Vite plugin version mismatch
       Icons({
-        compiler: 'astro'
-      })
-    ]
-  }
+        compiler: 'astro',
+      }),
+    ],
+  },
 })

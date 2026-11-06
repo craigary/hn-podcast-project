@@ -14,7 +14,8 @@ import { z } from 'zod'
  * 连续两次失败直接抛错，由上层决定整期失败，不做静默降级。
  */
 
-const TOOL_SUFFIX = (toolName: string) => `
+const TOOL_SUFFIX = (toolName: string) =>
+  `
 # 输出方式（必须严格遵守）
 你必须调用工具 ${toolName} 提交结果，不要直接输出 JSON 文本，不要输出解释。
 工具参数必须完全符合 schema。

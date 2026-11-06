@@ -1,13 +1,13 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-// apps/web/wrangler.jsonc
+  // apps/web/wrangler.jsonc
   "name": "hn-podcast-project",
   "compatibility_date": "2025-02-18",
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
-    "enabled": true
+    "enabled": true,
   },
   "assets": {
-    "directory": "./dist"
-  }
+    "directory": "./dist",
+  },
 }

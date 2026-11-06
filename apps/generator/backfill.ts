@@ -11,7 +11,8 @@ const from = fromIndex !== -1 ? args[fromIndex + 1] : DEFAULT_FROM
 const dryRun = args.includes('--dry-run') || args.includes('-n')
 
 const retriesIndex = args.indexOf('--retries')
-const retries = retriesIndex !== -1 ? Number(args[retriesIndex + 1]) : Number(process.env.BACKFILL_RETRIES || 3)
+const retries =
+  retriesIndex !== -1 ? Number(args[retriesIndex + 1]) : Number(process.env.BACKFILL_RETRIES || 3)
 const retryDelayIndex = args.indexOf('--retry-delay')
 const retryDelaySec =
   retryDelayIndex !== -1

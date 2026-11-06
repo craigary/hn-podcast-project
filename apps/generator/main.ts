@@ -6,7 +6,7 @@ import { screenStories } from './steps/screen'
 import { extractIntel } from './steps/intel'
 import type { ProcessedStory, ScreenedStory } from './types'
 import { assertChineseOutput } from './utils/validate'
-import { r2 } from './utils/storage/r2'
+import { CACHE_IMMUTABLE, CACHE_SHORT, putObject } from './utils/storage/r2'
 import { convertScriptToMarkdown } from './utils/markdown'
 import { generatePodcastAudio } from './utils/tts'
 import type { SegmentScript } from './ai/prompts/script'
@@ -127,7 +127,10 @@ async function main() {
   // Step 2.1 Save Blueprint to R2 (skip in local mode)
   const blueprintKey = `episodes/${episodeNumber}/blueprint.json`
   if (!local) {
-    await r2.setItem(blueprintKey, JSON.stringify(blueprint, null, 2))
+    await putObject(blueprintKey, JSON.stringify(blueprint, null, 2), {
+      contentType: 'application/json; charset=utf-8',
+      cacheControl: CACHE_SHORT,
+    })
     console.log(`✅ Blueprint 已保存到 R2: ${blueprintKey}`)
   }
 
@@ -153,7 +156,10 @@ async function main() {
 
   if (!local) {
     const coverImageKey = `episodes/${episodeNumber}/cover.png`
-    await r2.setItemRaw(coverImageKey, new Uint8Array(imageBuffer))
+    await putObject(coverImageKey, new Uint8Array(imageBuffer), {
+      contentType: 'image/png',
+      cacheControl: CACHE_IMMUTABLE,
+    })
     console.log(`✅ Cover Image 已保存到 R2: ${coverImageKey}`)
   }
 
@@ -234,14 +240,20 @@ async function main() {
   if (!local) {
     // Step 5.0: 完整脚本（含时间轴）上传 R2
     const scriptKey = `episodes/${episodeNumber}/script.json`
-    await r2.setItem(scriptKey, JSON.stringify(scriptWithTimeline, null, 2))
+    await putObject(scriptKey, JSON.stringify(scriptWithTimeline, null, 2), {
+      contentType: 'application/json; charset=utf-8',
+      cacheControl: CACHE_SHORT,
+    })
     console.log(`✅ 完整脚本（含时间轴）已保存到 R2: ${scriptKey}`)
 
     // Step 5.1: 上传音频到 R2
     console.log('\n📤 上传音频到 R2...')
     const audioBuffer = await readFile(audioPath)
     const audioKey = `episodes/${episodeNumber}/audio.mp3`
-    await r2.setItemRaw(audioKey, new Uint8Array(audioBuffer))
+    await putObject(audioKey, new Uint8Array(audioBuffer), {
+      contentType: 'audio/mpeg',
+      cacheControl: CACHE_IMMUTABLE,
+    })
     console.log(`✅ 音频已上传到 R2: ${audioKey}`)
 
     // Step 5.2: 清理临时文件
@@ -262,7 +274,9 @@ async function main() {
   // 带上版本号，重跑同一期时播放器和封面才会去拉新文件。
   const assetVersion = `v=${Date.now()}`
   const audioUrl = local ? '' : `${r2PublicUrl}/episodes/${episodeNumber}/audio.mp3?${assetVersion}`
-  const coverImageUrl = local ? '' : `${r2PublicUrl}/episodes/${episodeNumber}/cover.png?${assetVersion}`
+  const coverImageUrl = local
+    ? ''
+    : `${r2PublicUrl}/episodes/${episodeNumber}/cover.png?${assetVersion}`
   const markdown = await convertScriptToMarkdown(
     scriptWithTimeline,
     blueprint,

@@ -4,7 +4,6 @@ import HnLinkList from './HnLinkList.astro'
 interface Props {
   hnLinks: { title: string; url: string }[]
   episodeId?: number
-  // pollOptions: { label: string; votes: number }[]
   changelog: { date: string; text: string }[]
 }
 const { hnLinks, episodeId, changelog } = Astro.props
@@ -34,5 +33,3 @@ const { hnLinks, episodeId, changelog } = Astro.props
 </div>
 
 <div class="border-t border-bd my-5"></div>
-
-<!-- <PollSection options={pollOptions} /> -->

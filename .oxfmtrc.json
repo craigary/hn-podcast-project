@@ -1,0 +1,20 @@
+{
+  "semi": false,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "printWidth": 100,
+  "sortPackageJson": false,
+  "sortTailwindcss": {},
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "build",
+    ".next",
+    "coverage",
+    "pnpm-lock.yaml",
+    "*.min.js",
+    "*.min.css",
+    "apps/web/src/content/episodes/**"
+  ]
+}
