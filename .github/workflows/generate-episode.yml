@@ -53,7 +53,9 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: 安装 FFmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v3
+        # 钉到 v3.1 + node24 那个提交：v3.1 的 tag 还是 node20，会触发弃用告警。
+        # 上游发新 tag 后可以换回 FedericoCarboni/setup-ffmpeg@v3
+        uses: FedericoCarboni/setup-ffmpeg@8073ccb51e517ed576e6871c7f2360c6de4ebb7c
 
       - name: 生成播客剧集
         run: |
