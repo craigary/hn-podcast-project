@@ -18,6 +18,9 @@ const retryDelaySec =
     ? Number(args[retryDelayIndex + 1])
     : Number(process.env.BACKFILL_RETRY_DELAY || 60)
 const autoPush = process.env.AUTO_PUSH === '1'
+// --limit N：本次最多回填 N 期（例如每期单独起一个进程，避免长任务被中断）
+const limitIndex = args.indexOf('--limit')
+const limit = limitIndex !== -1 ? Number(args[limitIndex + 1]) : Infinity
 
 if (!from || !/^\d{4}-\d{2}-\d{2}$/.test(from)) {
   throw new Error(`--from 必须是 YYYY-MM-DD，收到: ${from ?? '(空)'}`)
@@ -27,6 +30,9 @@ if (!isTuesday(from)) {
 }
 if (!Number.isInteger(retries) || retries < 1) {
   throw new Error(`--retries 必须是 ≥1 的整数，收到: ${retries}`)
+}
+if (limit !== Infinity && (!Number.isInteger(limit) || limit < 1)) {
+  throw new Error(`--limit 必须是 ≥1 的整数，收到: ${limit}`)
 }
 if (!Number.isFinite(retryDelaySec) || retryDelaySec < 0) {
   throw new Error(`--retry-delay 必须是 ≥0 的秒数，收到: ${retryDelaySec}`)
@@ -58,6 +64,11 @@ if (dryRun) {
     nextNumber += 1
   }
   process.exit(0)
+}
+
+if (dates.length > limit) {
+  console.log(`   本次只跑前 ${limit} 期（--limit ${limit}）`)
+  dates.splice(limit)
 }
 
 console.log(dates.join(', '))

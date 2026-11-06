@@ -109,6 +109,12 @@ export const processSectionVoice = async (
     }
   }
 
+  // 任何一句合成失败都让整期失败：否则会发布只剩背景音乐的音频（EP92 事故）
+  const failed = results.filter((r) => r === null).length
+  if (failed > 0) {
+    throw new Error(`[语音合成] ${prefix} 有 ${failed}/${lines.length} 句合成失败，终止本期生成`)
+  }
+
   return results.filter((r): r is { path: string; duration: number } => r !== null)
 }
 

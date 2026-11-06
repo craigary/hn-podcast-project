@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "nextNumber": 92,
+  "nextNumber": 115,
   "episodes": [
     {
       "number": 1,
@@ -455,6 +455,121 @@
     {
       "number": 91,
       "date": "2026-05-30",
+      "status": "published"
+    },
+    {
+      "number": 92,
+      "date": "2026-06-02",
+      "status": "published"
+    },
+    {
+      "number": 93,
+      "date": "2026-06-09",
+      "status": "published"
+    },
+    {
+      "number": 94,
+      "date": "2026-06-16",
+      "status": "published"
+    },
+    {
+      "number": 95,
+      "date": "2026-06-23",
+      "status": "published"
+    },
+    {
+      "number": 96,
+      "date": "2026-06-30",
+      "status": "published"
+    },
+    {
+      "number": 97,
+      "date": "2026-07-07",
+      "status": "published"
+    },
+    {
+      "number": 98,
+      "date": "2026-07-14",
+      "status": "published"
+    },
+    {
+      "number": 99,
+      "date": "2026-07-21",
+      "status": "published"
+    },
+    {
+      "number": 100,
+      "date": "2026-07-28",
+      "status": "published"
+    },
+    {
+      "number": 101,
+      "date": "2026-08-04",
+      "status": "published"
+    },
+    {
+      "number": 102,
+      "date": "2026-08-11",
+      "status": "published"
+    },
+    {
+      "number": 103,
+      "date": "2026-08-18",
+      "status": "published"
+    },
+    {
+      "number": 104,
+      "date": "2026-08-25",
+      "status": "published"
+    },
+    {
+      "number": 105,
+      "date": "2026-09-01",
+      "status": "published"
+    },
+    {
+      "number": 106,
+      "date": "2026-09-08",
+      "status": "published"
+    },
+    {
+      "number": 107,
+      "date": "2026-09-15",
+      "status": "published"
+    },
+    {
+      "number": 108,
+      "date": "2026-09-22",
+      "status": "published"
+    },
+    {
+      "number": 109,
+      "date": "2026-09-29",
+      "status": "published"
+    },
+    {
+      "number": 110,
+      "date": "2026-10-06",
+      "status": "published"
+    },
+    {
+      "number": 111,
+      "date": "2026-10-13",
+      "status": "published"
+    },
+    {
+      "number": 112,
+      "date": "2026-10-20",
+      "status": "published"
+    },
+    {
+      "number": 113,
+      "date": "2026-10-27",
+      "status": "published"
+    },
+    {
+      "number": 114,
+      "date": "2026-11-03",
       "status": "published"
     }
   ]

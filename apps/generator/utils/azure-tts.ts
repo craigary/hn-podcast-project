@@ -20,6 +20,12 @@ interface EndpointResponse {
 
 let authCache: AzureAuth | null = null
 
+// 部分区域（如 westus）不提供 DragonHD 等新声音，会直接返回 400。
+// 令牌在 eastus 同样有效，所以默认用 TTS_REGION 覆盖，否则在 400 时回退到 eastus。
+const REGION_OVERRIDE = process.env.TTS_REGION?.trim() || ''
+const FALLBACK_REGION = 'eastus'
+let preferredRegion: string | null = REGION_OVERRIDE || null
+
 /**
  * 核心签名算法
  */
@@ -95,7 +101,8 @@ export async function synthesizeSpeech(
       authCache = await getEndpointToken()
     }
 
-    const url = `https://${authCache.region}.tts.speech.microsoft.com/cognitiveservices/v1`
+    const region = preferredRegion ?? authCache.region
+    const ttsUrl = (r: string) => `https://${r}.tts.speech.microsoft.com/cognitiveservices/v1`
 
     // 增强的文本清洗，防止 XML 注入和语速异常
     const cleanText = text
@@ -131,11 +138,25 @@ export async function synthesizeSpeech(
       'User-Agent': 'okhttp/4.5.0',
     }
 
-    const response = await fetch(url, {
+    let response = await fetch(ttsUrl(region), {
       method: 'POST',
       headers,
       body: ssml,
     })
+
+    // 当前区域不支持该声音时（400），换到 eastus 再试一次，并记住这个区域
+    if (response.status === 400 && region !== FALLBACK_REGION) {
+      const fallback = await fetch(ttsUrl(FALLBACK_REGION), {
+        method: 'POST',
+        headers,
+        body: ssml,
+      })
+      if (fallback.ok) {
+        console.warn(`ℹ️ TTS 区域 ${region} 不支持 ${voiceName}，改用 ${FALLBACK_REGION}`)
+        preferredRegion = FALLBACK_REGION
+      }
+      response = fallback
+    }
 
     if (!response.ok) {
       const errorText = await response.text()
