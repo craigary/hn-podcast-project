@@ -12,12 +12,7 @@ import { generatePodcastAudio } from './utils/tts'
 import type { SegmentScript } from './ai/prompts/script'
 import { writeFile, readFile, rm, mkdir } from 'fs/promises'
 import { join } from 'path'
-import {
-  addDays,
-  getLatestTuesday,
-  getPublishWindow,
-  getWeekRangeLabel,
-} from './utils/date'
+import { addDays, getLatestTuesday, getPublishWindow, getWeekRangeLabel } from './utils/date'
 import {
   EPISODES_DIR,
   publishEpisode,
@@ -165,13 +160,26 @@ async function main() {
   // Step 4: Generate Scripts
   console.log('\n📝 开始生成脚本...')
 
+  // 开场用的钩子：分数最高、评论区有狠话的那几条
+  const hooks = [...processedStories]
+    .sort((a, b) => b.points - a.points)
+    .filter((story) => story.spicy_quote)
+    .slice(0, 4)
+    .map((story) => ({ title: story.title, quote: story.spicy_quote, points: story.points }))
+
   // Step 4.1: Generate Intro Script
   const introScript = await generateIntroScript({
     episodeOverview: blueprint.episode_overview,
     weekRange,
+    hooks,
   })
 
   // Step 4.2: Generate Segment Scripts
+  // airedLines 累积前面所有已播对话，后面每段都知道前面说过什么
+  const airedLines: { speaker: string; text: string }[] = introScript.lines.map((line) => ({
+    speaker: line.speaker,
+    text: line.text,
+  }))
   const segmentScripts: SegmentScript[] = []
 
   for (let i = 0; i < blueprint.segments.length; i++) {
@@ -181,15 +189,22 @@ async function main() {
       allStories: processedStories,
       episodeOverview: blueprint.episode_overview,
       segmentIndex: i,
+      totalSegments: blueprint.segments.length,
       weekRange,
+      airedLines,
     })
     segmentScripts.push(segmentScript)
+    airedLines.push(
+      ...segmentScript.lines.map((line) => ({ speaker: line.speaker, text: line.text }))
+    )
   }
 
   // Step 4.3: Generate Outro Script
   const outroScript = await generateOutroScript({
     episodeOverview: blueprint.episode_overview,
     weekRange,
+    airedLines,
+    segmentCount: blueprint.segments.length,
   })
 
   // Step 4.4: Combine all scripts

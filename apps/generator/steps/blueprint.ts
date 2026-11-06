@@ -39,7 +39,7 @@ export const generateBlueprint = async ({
     prompt: `这是本期的候选情报（每条只有评论区摘要，没有全文）：\n${JSON.stringify(candidates)}`,
     toolName: 'submit_blueprint',
     maxOutputTokens: 8000,
-    temperature: 0.2,
+    temperature: 0.7,
     validate: (blueprint) => {
       if (!blueprint.segments?.length) throw new Error('blueprint 没有生成任何 segment')
       const ids = new Set(candidates.map((c) => c.id))
@@ -48,6 +48,15 @@ export const generateBlueprint = async ({
         .filter((id) => !ids.has(id))
       if (unknown.length > 0)
         throw new Error(`blueprint 引用了不存在的 story id: ${unknown.join(',')}`)
+
+      // angle 决定这一段有没有话可聊，空字符串会让脚本退化成两条新闻串讲
+      const thin = blueprint.segments
+        .map((segment, index) => ({ index, angle: segment.angle?.trim() ?? '' }))
+        .filter((item) => item.angle.length < 6)
+      if (thin.length > 0)
+        throw new Error(
+          `以下 segment 缺 angle（需要一句可被反驳的判断）：${thin.map((t) => t.index + 1).join(',')}`
+        )
     },
   })
 
