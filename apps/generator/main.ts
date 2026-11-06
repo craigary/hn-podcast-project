@@ -258,8 +258,11 @@ async function main() {
   // Step 6: Convert to Markdown and save locally
   console.log('\n📄 生成 Markdown 文件...')
   const r2PublicUrl = process.env.CF_R2_PUBLIC_URL || ''
-  const audioUrl = local ? '' : `${r2PublicUrl}/episodes/${episodeNumber}/audio.mp3`
-  const coverImageUrl = local ? '' : `${r2PublicUrl}/episodes/${episodeNumber}/cover.png`
+  // R2 公开域名不发 Cache-Control，浏览器会把同名文件一直用缓存。
+  // 带上版本号，重跑同一期时播放器和封面才会去拉新文件。
+  const assetVersion = `v=${Date.now()}`
+  const audioUrl = local ? '' : `${r2PublicUrl}/episodes/${episodeNumber}/audio.mp3?${assetVersion}`
+  const coverImageUrl = local ? '' : `${r2PublicUrl}/episodes/${episodeNumber}/cover.png?${assetVersion}`
   const markdown = await convertScriptToMarkdown(
     scriptWithTimeline,
     blueprint,
