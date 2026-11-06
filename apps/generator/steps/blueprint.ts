@@ -63,7 +63,9 @@ export const generateBlueprint = async ({
   output.episode_overview.title = processText(output.episode_overview.title)
   output.episode_overview.description = processText(output.episode_overview.description)
 
-  await kv.setItem(`${weekRange}:blueprint`, JSON.stringify(output), { expirationTtl: 604_800 })
+  await kv
+    .setItem(`${weekRange}:blueprint`, JSON.stringify(output), { expirationTtl: 604_800 })
+    .catch(() => undefined)
 
   console.log(`✅ [Blueprint 生成成功] 标题: ${output.episode_overview.title}`)
   return output

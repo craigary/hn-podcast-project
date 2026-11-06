@@ -24,8 +24,15 @@ interface ExaResult {
 const cacheKey = (url: string) => `exa:${encodeURIComponent(url)}`
 
 /** 只读缓存，不发请求。脚本阶段优先用这个，避免重复抓取。 */
-export const getCachedPage = async (url: string): Promise<PageContent | null> =>
-  (await kv.getItem<PageContent>(cacheKey(url))) ?? null
+export const getCachedPage = async (url: string): Promise<PageContent | null> => {
+  try {
+    return (await kv.getItem<PageContent>(cacheKey(url))) ?? null
+  } catch (error) {
+    // 缓存是加速手段，读不到就当作没命中，不影响生成
+    console.warn(`⚠️  KV 读取失败，按未命中处理: ${(error as Error).message}`)
+    return null
+  }
+}
 
 /**
  * 抓取一个页面，一次请求同时拿 text + summary + highlights，并缓存 7 天。
@@ -73,6 +80,11 @@ export const fetchPageContent = async (
     highlights: result.highlights ?? [],
   }
 
-  await kv.setItem(cacheKey(url), page, { expirationTtl: CACHE_TTL })
+  // 写缓存同样按尽力而为处理：写失败只会让下次多抓一次
+  try {
+    await kv.setItem(cacheKey(url), page, { expirationTtl: CACHE_TTL })
+  } catch (error) {
+    console.warn(`⚠️  KV 写入失败，跳过缓存: ${(error as Error).message}`)
+  }
   return page
 }

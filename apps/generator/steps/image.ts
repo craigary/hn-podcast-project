@@ -25,7 +25,8 @@ export const generateCoverPrompt = async ({
   dateStr: string
 }): Promise<string> => {
   const cacheKey = `${dateStr}:cover-prompt`
-  const cached = await kv.getItem<string>(cacheKey)
+  // 缓存是尽力而为的加速项，KV 抖动不应该让封面步骤失败
+  const cached = await kv.getItem<string>(cacheKey).catch(() => null)
   if (cached) {
     console.log(`[Cache Hit] Cover prompt ${dateStr}, return`)
     return cached
@@ -42,9 +43,7 @@ export const generateCoverPrompt = async ({
 
   const coverPrompt = text.trim()
 
-  await kv.setItem(cacheKey, coverPrompt, {
-    expirationTtl: 604_800,
-  })
+  await kv.setItem(cacheKey, coverPrompt, { expirationTtl: 604_800 }).catch(() => undefined)
 
   console.log(`✅ [Cover Prompt 生成成功] ${coverPrompt.slice(0, 80)}...`)
   return coverPrompt
