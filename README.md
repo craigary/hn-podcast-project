@@ -9,7 +9,7 @@
 ## 核心功能
 
 - **自动化选题**：根据分数和日期，自动抓取 Hacker News 上的热门讨论。
-- **AI 驱动脚本创作**：利用 gpt-oss-120b、Mistral Large 等模型，生成播客大纲和生动自然的对话脚本。
+- **AI 驱动脚本创作**：用 DeepSeek V4.1 Flash 生成播客大纲和生动自然的对话脚本。
 - **个性化主持人**：
   - **小雅**：Web 开发/前端专家，性格直率，效率至上，拥抱 AI。
   - **老冯**：底层架构/系统老兵，老油条，技术深度极高，喜欢冷嘲热讽。
@@ -36,39 +36,29 @@
 - 生成播客：`bun run gen`
 - 指定发布日生成/覆盖：`bun run gen -- --date 2026-06-02 --force`
 - 预览生成计划：`bun run gen -- --date 2026-06-02 --dry-run`
-- 回填缺失的周二：`bun run backfill`
-- 预览回填编号：`bun run backfill -- --dry-run`
-- VPS 一键回填：`bun run backfill:vps`
+- 本地调试（只写 .tmp，不上传）：`bun run gen -- --local --force`
+- 检查代码（lint + 格式 + 类型）：`bun run check`
 
-## 在 VPS 上回填
+## 补生成某一期
 
-VPS 需要 Bun、`ffmpeg`、`ffprobe`，以及 `apps/generator/.env`（不要提交到 git）。
-
-```bash
-git clone <repo> hn-podcast-project
-cd hn-podcast-project
-
-# 从本地把 .env 复制到 VPS
-scp apps/generator/.env user@vps:/path/to/hn-podcast-project/apps/generator/.env
-
-# 建议放在 tmux 里跑，避免 SSH 断开
-tmux new -s hn-backfill 'bash scripts/vps-backfill.sh'
-
-# 或者直接跑
-bun run backfill:vps
-```
-
-脚本会先打印待回填日期和编号，然后按顺序生成。默认每期失败重试 3 次、间隔 60 秒；重试仍失败会停下，重跑会跳过已完成日期并从失败那天继续。日志在 `apps/generator/.tmp/backfill-*.log`。
-
-可选参数：
+线上某一期失败时（比如某个 API 临时抽风），本地用同一日期重跑一次就行，期号会复用原来的，不会多占编号：
 
 ```bash
-bash scripts/vps-backfill.sh 2026-07-07      # 从指定周二开始
-SKIP_INSTALL=1 bash scripts/vps-backfill.sh  # 跳过 bun install
-REPO_DIR=/path/to/repo bash vps-backfill.sh  # 脚本放在仓库外时指定仓库路径
-
-BACKFILL_RETRIES=5 BACKFILL_RETRY_DELAY=120 bash scripts/vps-backfill.sh
-AUTO_PUSH=1 bash scripts/vps-backfill.sh     # 每期成功后自动 commit + push
+bun run gen -- --date 2026-11-03 --force
 ```
 
-> `.env` 不在仓库里（已被 gitignore）。VPS 上必须单独创建 `apps/generator/.env`，不要把真实密钥提交到 git。
+`--force` 会覆盖 `apps/web/src/content/episodes/114.md`，并重新上传 R2 上的音频和封面；文件地址里的 `?v=` 版本号会跟着变，听众的播放器不会拿到旧缓存。
+
+只想看期号和内容窗口，不真的生成：
+
+```bash
+bun run gen -- --date 2026-11-03 --dry-run
+```
+
+只想在本地听效果，不碰线上任何东西：
+
+```bash
+bun run gen -- --date 2026-11-03 --local --force
+```
+
+运行前需要两份东西：`apps/generator/.env`（Bun 会按工作目录自动加载，不要提交到 git），以及系统里可用的 `ffmpeg` / `ffprobe`。

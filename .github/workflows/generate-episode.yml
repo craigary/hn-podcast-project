@@ -1,9 +1,9 @@
 name: 生成播客剧集
 
 on:
-  # 暂时关闭自动运行；回填完成后再取消注释
-  # schedule:
-  #   - cron: '30 23 * * 1'
+  schedule:
+    # 北京时间每周二 07:30 = UTC 周一 23:30
+    - cron: '30 23 * * 1'
   workflow_dispatch:
     inputs:
       date:
@@ -24,6 +24,7 @@ concurrency:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: write
 

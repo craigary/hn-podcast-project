@@ -9,8 +9,6 @@
   ],
   "scripts": {
     "gen": "bun run --filter generator gen",
-    "backfill": "bun run --filter generator backfill",
-    "backfill:vps": "bash scripts/vps-backfill.sh",
     "dev": "bun run --filter web dev",
     "build": "bun run --filter web build",
     "deploy": "bun run --filter web deploy",

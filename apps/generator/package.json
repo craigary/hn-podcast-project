@@ -3,15 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "gen": "bun main.ts",
-    "backfill": "bun backfill.ts"
+    "gen": "bun main.ts"
   },
   "dependencies": {
-    "@ai-sdk/mistral": "^3.0.78",
     "@ai-sdk/openai-compatible": "^2.0.88",
     "@hn/config": "workspace:*",
     "ai": "^6.0.319",
-    "ai-sdk-provider-gemini-cli": "^2.0.1",
     "aws4fetch": "^1.0.20",
     "execa": "^9.6.1",
     "pangu": "^7.2.1",

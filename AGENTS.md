@@ -45,8 +45,6 @@ packages/
 - `bun run gen -- --date 2026-06-02 --force`：覆盖同一期（复用原编号）
 - `bun run gen -- --date 2026-06-02 --dry-run`：只打印编号和内容窗口，不执行生成
 - `bun run gen -- --local`：本地调试，产物只写 `.tmp`，不写 content / 不上传 R2
-- `bun run backfill`：从 `2026-06-02` 起按周二回填缺失期数
-- `bun run backfill -- --dry-run`：预览回填日期与编号
 
 说明：
 
@@ -61,6 +59,7 @@ packages/
 - `bun run format`：oxfmt（`bun run format:check` 只检查）
 - `bun run typecheck`：generator / config 的 tsc + web 的 astro check
 - `bun run check`：lint + format:check + typecheck，提交前跑这一个就够
+- 补某一期：`bun run gen -- --date <YYYY-MM-DD> --force`，期号复用原编号
 
 ## 3) 生成流水线（apps/generator）
 

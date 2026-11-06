@@ -54,7 +54,7 @@ function parseArgs() {
 async function main() {
   const { date: argDate, force, local, dryRun } = parseArgs()
 
-  // 默认取最近一个已经到来的周二（北京时间）；手动传 --date 可回填
+  // 默认取最近一个已经到来的周二（北京时间）；手动传 --date 可补生成指定某期
   const publishDate = argDate ?? getLatestTuesday()
   if (!DATE_RE.test(publishDate)) {
     throw new Error(`--date 必须是 YYYY-MM-DD，收到: ${publishDate}`)
@@ -69,7 +69,7 @@ async function main() {
   const lastPublished = index.episodes[index.episodes.length - 1]
   if (!argDate && lastPublished && lastPublished.date < addDays(publishDate, -7)) {
     console.warn(`⚠️  上一期是 ${lastPublished.date}，中间可能还有未生成的周二。`)
-    console.warn(`   如果这是首次回填，请先运行 bun run backfill -- --dry-run 检查。`)
+    console.warn(`   补某一期：bun run gen -- --date <YYYY-MM-DD> --dry-run`)
   }
 
   console.log(`\n📻 发布日 ${publishDate} / Episode ${episodeNumber}`)
