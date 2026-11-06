@@ -15,7 +15,7 @@
   - **老冯**：底层架构/系统老兵，老油条，技术深度极高，喜欢冷嘲热讽。
 - **高品质语音**：使用 Microsoft Azure TTS（逆向工程接口）合成自然流畅、带有情感的语音。
 - **专业后期制作**：使用 FFmpeg 自动进行音频混音，添加背景音乐、转场音效和环境音。
-- **封面自动生成**：使用 Pollinations AI 为每一期节目生成专属封面。
+- **封面自动生成**：使用 Cloudflare Workers AI（FLUX.2 Dev）为每一期节目生成专属封面，失败时回退到默认封面。
 - **静态网站发布**：基于 Astro 构建的前端页面，支持在线收听。
 
 ## 技术栈
@@ -23,7 +23,7 @@
 - **开发语言**: TypeScript
 - **运行环境**: Bun
 - **前端框架**: Astro
-- **AI 模型**: DeepSeek, Exa, Pollinations
+- **AI 模型**: DeepSeek, Exa, Cloudflare Workers AI
 - **音频处理**: FFmpeg, Microsoft Azure TTS
 - **云服务**: Cloudflare R2 (对象存储), Cloudflare KV (键值存储)
 
@@ -32,6 +32,7 @@
 - 安装依赖：`bun install`
 - 开发站点：`bun run dev`
 - 构建站点：`bun run build`
+- 部署站点：`bun run deploy`
 - 生成播客：`bun run gen`
 - 指定发布日生成/覆盖：`bun run gen -- --date 2026-06-02 --force`
 - 预览生成计划：`bun run gen -- --date 2026-06-02 --dry-run`

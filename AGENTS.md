@@ -71,7 +71,7 @@ packages/
 3. `screen`：用 Exa 抓 HN 详情页（text + summary + highlights），KV 缓存 7 天，不调用 LLM
 4. `blueprint`：基于摘要生成整期结构（分段、选题、氛围）
 4.5 `intel`：只对 blueprint 选中的故事批量提取「冲突 + 原话」（1 次 LLM 调用）
-5. `image`：生成封面提示词并拉取封面图
+5. `image`：生成封面提示词，用 Workers AI（FLUX.2 Dev）出图，失败回落默认封面
 6. `script`：生成 intro / segment / outro 对话脚本
 7. `tts`：Azure TTS 合成语音，FFmpeg 混音、转场、封面嵌入
 8. 上传 `audio.mp3`、`cover.png`、`script.json`、`blueprint.json` 到 R2
@@ -97,7 +97,7 @@ packages/
 - AI：
   - `SUPERLINKED_API_KEY`（DeepSeek V4.1 Flash，主力模型）
   - `EXA_API_KEY`（HN 页面抓取/摘要）
-  - `POLLINATIONS_API_KEY`（封面生成）
+  - `CF_API_TOKEN` / `CF_ACCOUNT_ID`（Cloudflare Workers AI 封面生成）
 - Cloudflare：
   - `CF_ACCOUNT_ID`
   - `CF_API_TOKEN`

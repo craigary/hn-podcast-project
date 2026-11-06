@@ -57,7 +57,6 @@ jobs:
           bun run gen -- "${ARGS[@]}"
         env:
           SUPERLINKED_API_KEY: ${{ secrets.SUPERLINKED_API_KEY }}
-          POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
           EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}

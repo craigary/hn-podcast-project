@@ -13,6 +13,7 @@
     "backfill:vps": "bash scripts/vps-backfill.sh",
     "dev": "bun run --cwd apps/web dev",
     "build": "bun run --cwd apps/web build",
+    "deploy": "bun run --cwd apps/web deploy",
     "preview": "bun run --cwd apps/web preview",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\""
