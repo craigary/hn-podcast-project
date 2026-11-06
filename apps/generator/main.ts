@@ -1,5 +1,10 @@
 import { generateBlueprint } from './steps/blueprint'
-import { generateCoverImage, generateCoverPrompt, loadDefaultCover } from './steps/image'
+import {
+  generateCoverImage,
+  generateCoverPrompt,
+  loadDefaultCover,
+  type CoverAsset,
+} from './steps/image'
 import { generateSegmentScript, generateIntroScript, generateOutroScript } from './steps/script'
 import { fetchWeeklyTopStories } from './utils/hn'
 import { screenStories } from './steps/screen'
@@ -172,29 +177,29 @@ async function main() {
   }
 
   // Step 3, Generate Cover Image. 任何一步失败都退回默认封面，不阻断后面的流程
-  let imageBuffer: ArrayBuffer
+  let cover: CoverAsset
   try {
     const coverPrompt = await generateCoverPrompt({
       blueprint,
       dateStr: publishDate,
     })
-    imageBuffer = await generateCoverImage(coverPrompt)
+    cover = await generateCoverImage(coverPrompt)
   } catch (error) {
     console.warn('⚠️  封面生成失败，改用默认封面:', error)
-    imageBuffer = await loadDefaultCover()
+    cover = await loadDefaultCover()
   }
 
   // Step 3.1 Save Cover Image to R2 and temporary directory
   const tmpDir = join(import.meta.dir, '.tmp')
   await mkdir(tmpDir, { recursive: true })
-  const coverImagePath = join(tmpDir, `cover-${episodeNumber}.png`)
-  await writeFile(coverImagePath, new Uint8Array(imageBuffer))
+  const coverImagePath = join(tmpDir, `cover-${episodeNumber}.${cover.ext}`)
+  await writeFile(coverImagePath, new Uint8Array(cover.data))
   console.log(`✅ Cover Image 已保存到临时目录: ${coverImagePath}`)
 
   if (!local) {
-    const coverImageKey = `episodes/${episodeNumber}/cover.png`
-    await putObject(coverImageKey, new Uint8Array(imageBuffer), {
-      contentType: 'image/png',
+    const coverImageKey = `episodes/${episodeNumber}/cover.${cover.ext}`
+    await putObject(coverImageKey, new Uint8Array(cover.data), {
+      contentType: cover.contentType,
       cacheControl: CACHE_IMMUTABLE,
     })
     console.log(`✅ Cover Image 已保存到 R2: ${coverImageKey}`)
@@ -313,7 +318,7 @@ async function main() {
   const audioUrl = local ? '' : `${r2PublicUrl}/episodes/${episodeNumber}/audio.mp3?${assetVersion}`
   const coverImageUrl = local
     ? ''
-    : `${r2PublicUrl}/episodes/${episodeNumber}/cover.png?${assetVersion}`
+    : `${r2PublicUrl}/episodes/${episodeNumber}/cover.${cover.ext}?${assetVersion}`
   const markdown = await convertScriptToMarkdown(
     scriptWithTimeline,
     blueprint,

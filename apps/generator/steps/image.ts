@@ -12,9 +12,23 @@ const DEFAULT_COVER_PATH = join(import.meta.dir, '..', 'assets', 'default-cover.
 const IMAGE_MODEL = process.env.IMAGE_MODEL || '@cf/black-forest-labs/flux-2-dev'
 const IMAGE_STEPS = Number(process.env.IMAGE_STEPS || 4)
 
-export const loadDefaultCover = async (): Promise<ArrayBuffer> => {
+/** 单边像素。Workers AI 的上限是 2048（请求 3000 会直接报 too large） */
+const COVER_SIZE = Number(process.env.IMAGE_SIZE || 2048)
+
+/** 封面文件：真实格式跟着字节走，避免 .png 里装 JPEG */
+export type CoverAsset = {
+  data: ArrayBuffer
+  contentType: 'image/jpeg' | 'image/png'
+  ext: 'jpg' | 'png'
+}
+
+export const loadDefaultCover = async (): Promise<CoverAsset> => {
   console.log('🖼️  使用默认封面')
-  return Bun.file(DEFAULT_COVER_PATH).arrayBuffer()
+  return {
+    data: await Bun.file(DEFAULT_COVER_PATH).arrayBuffer(),
+    contentType: 'image/png',
+    ext: 'png',
+  }
 }
 
 export const generateCoverPrompt = async ({
@@ -51,10 +65,10 @@ export const generateCoverPrompt = async ({
 
 /**
  * 用 Cloudflare Workers AI 生成封面。
- * FLUX.2 系列要求 multipart/form-data。
+ * FLUX.2 系列要求 multipart/form-data，单边最大 2048。
  * 失败时由调用方回退到 assets/default-cover.png。
  */
-export const generateCoverImage = async (prompt: string): Promise<ArrayBuffer> => {
+export const generateCoverImage = async (prompt: string): Promise<CoverAsset> => {
   const accountId = process.env.CF_ACCOUNT_ID
   const apiToken = process.env.CF_API_TOKEN
 
@@ -62,9 +76,13 @@ export const generateCoverImage = async (prompt: string): Promise<ArrayBuffer> =
     throw new Error('缺少 CF_ACCOUNT_ID / CF_API_TOKEN，无法调用 Workers AI')
   }
 
+  const size = Number.isFinite(COVER_SIZE) ? Math.min(COVER_SIZE, 2048) : 2048
+
   const form = new FormData()
   form.append('prompt', prompt)
   form.append('steps', String(Number.isFinite(IMAGE_STEPS) ? IMAGE_STEPS : 4))
+  form.append('width', String(size))
+  form.append('height', String(size))
 
   const res = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${IMAGE_MODEL}`,
@@ -87,12 +105,16 @@ export const generateCoverImage = async (prompt: string): Promise<ArrayBuffer> =
   if (contentType.startsWith('image/')) {
     const imageBuffer = await res.arrayBuffer()
     console.log(
-      `✅ [Cover Image 生成成功] ${IMAGE_MODEL} ${contentType} ${(imageBuffer.byteLength / 1024).toFixed(1)} KB`
+      `✅ [Cover Image 生成成功] ${IMAGE_MODEL} ${size}×${size} ${contentType} ${(imageBuffer.byteLength / 1024).toFixed(1)} KB`
     )
-    return imageBuffer
+    return {
+      data: imageBuffer,
+      contentType: contentType.startsWith('image/png') ? 'image/png' : 'image/jpeg',
+      ext: contentType.startsWith('image/png') ? 'png' : 'jpg',
+    }
   }
 
-  // FLUX.2 返回 JSON: { result: { image: "<base64>" } }
+  // FLUX.2 返回 JSON: { result: { image: "<base64>" } }，内容是 JPEG
   const data = (await res.json()) as { result?: { image?: string } }
   const base64 = data.result?.image
   if (!base64) {
@@ -106,7 +128,7 @@ export const generateCoverImage = async (prompt: string): Promise<ArrayBuffer> =
   ) as ArrayBuffer
 
   console.log(
-    `✅ [Cover Image 生成成功] ${IMAGE_MODEL} image/jpeg ${(imageBuffer.byteLength / 1024).toFixed(1)} KB`
+    `✅ [Cover Image 生成成功] ${IMAGE_MODEL} ${size}×${size} image/jpeg ${(imageBuffer.byteLength / 1024).toFixed(1)} KB`
   )
-  return imageBuffer
+  return { data: imageBuffer, contentType: 'image/jpeg', ext: 'jpg' }
 }
