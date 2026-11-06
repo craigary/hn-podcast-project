@@ -19,6 +19,11 @@ on:
         required: false
         type: boolean
         default: false
+      dry_run:
+        description: '只解析参数并打印期号与内容窗口，不抓取也不生成'
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   # 同一分支上的生成任务串行执行，避免并发提交互相覆盖
@@ -61,6 +66,9 @@ jobs:
           fi
           if [ "${{ inputs.force }}" = "true" ]; then
             ARGS+=(--force)
+          fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            ARGS+=(--dry-run)
           fi
           echo "生成参数: ${ARGS[*]:-（无，按最近周二）}"
           bun run gen -- "${ARGS[@]}"
