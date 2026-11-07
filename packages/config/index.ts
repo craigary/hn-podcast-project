@@ -18,9 +18,7 @@ export const podcastConfig = {
       personality:
         '愤青，效率至上，拥抱 AI 热潮，有一说一，最烦大厂虚伪公关，年轻热情。偶尔会说脏话，对技术话题有独到见解。',
       voice: 'zh-CN-Xiaochen:DragonHDFlashLatestNeural', // Azure：活泼女声
-      mimoVoice: '冰糖',
-      mimoStyle:
-        'A sharp woman in her late twenties, quick and direct — warm when something excites her, impatient when it does not. Speaks fast, cuts sentences short.',
+      mimoVoice: 'mimo_default',
     },
     male: {
       name: '老冯',
@@ -28,8 +26,6 @@ export const podcastConfig = {
       personality: '痞气十足，老油条，爱跑题，喜爱 AI，但相对谨慎，喜欢冷嘲热讽，技术深度极高。',
       voice: 'zh-CN-Yunxiao:DragonHDFlashLatestNeural', // Azure：比较成熟的男声
       mimoVoice: '白桦',
-      mimoStyle:
-        'A man in his forties with a low, relaxed voice — dry humor, slow to be impressed, a little smug. Explains things like he has seen this exact failure before.',
     },
   },
   ai: {

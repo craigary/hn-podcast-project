@@ -34,7 +34,6 @@ export async function synthesizeSpeech(
   text: string,
   voiceName: string,
   emotion: string = 'neutral',
-  persona = '',
   retries = 4
 ): Promise<Buffer> {
   const apiKey = process.env.MIMO_API_KEY
@@ -43,8 +42,7 @@ export async function synthesizeSpeech(
   const cleanText = text.replace(/\s+/g, ' ').trim()
   if (!cleanText) throw new Error('合成文本为空')
 
-  const emotionStyle = EMOTION_STYLES[emotion] ?? STYLE_FALLBACK
-  const style = persona ? `${persona} ${emotionStyle}` : emotionStyle
+  const style = EMOTION_STYLES[emotion] ?? STYLE_FALLBACK
 
   const body = {
     model: MODEL,

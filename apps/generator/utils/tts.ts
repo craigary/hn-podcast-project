@@ -13,15 +13,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const TTS_PROVIDER = (process.env.TTS_PROVIDER ?? 'mimo').toLowerCase()
 const useMimo = TTS_PROVIDER !== 'azure'
 
-type Synthesizer = (
-  text: string,
-  voice: string,
-  emotion: string,
-  persona: string
-) => Promise<Buffer>
+/** MiMo 输出偏慢，统一加速到 1.25 倍；atempo 只改速度不改音高 */
+const MIMO_SPEED = 1.25
+
+type Synthesizer = (text: string, voice: string, emotion: string) => Promise<Buffer>
 
 const synthesizeLine: Synthesizer = useMimo
-  ? (text, voice, emotion, persona) => synthesizeMimoSpeech(text, voice, emotion, persona)
+  ? (text, voice, emotion) => synthesizeMimoSpeech(text, voice, emotion)
   : (text, voice) => synthesizeAzureSpeech(text, voice, 'general')
 
 interface FullScript {
@@ -114,9 +112,28 @@ export const processSectionVoice = async (
     const voice = useMimo ? host.mimoVoice : host.voice
 
     try {
-      const buffer = await synthesize(line.text, voice, line.emotion, host.mimoStyle)
+      const buffer = await synthesize(line.text, voice, line.emotion)
       const filePath = path.join(tmpDir, `${prefix}_line_${index}.mp3`)
-      await write(filePath, new Uint8Array(buffer))
+
+      if (useMimo) {
+        // 先落原始文件，再用 ffmpeg 变速，时间轴量到的才是加速后的真实时长
+        const rawPath = path.join(tmpDir, `${prefix}_line_${index}.raw.mp3`)
+        await write(rawPath, new Uint8Array(buffer))
+        await execa('ffmpeg', [
+          '-i',
+          rawPath,
+          '-filter:a',
+          `atempo=${MIMO_SPEED}`,
+          '-b:a',
+          '128k',
+          '-y',
+          filePath,
+        ])
+        await rm(rawPath)
+      } else {
+        await write(filePath, new Uint8Array(buffer))
+      }
+
       const duration = await getDuration(filePath)
       results.push({ path: filePath, duration })
     } catch (error) {
