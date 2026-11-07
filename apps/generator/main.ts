@@ -27,6 +27,13 @@ import {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
+/**
+ * R2 对象前缀。默认空串，写到线上路径；
+ * 预览/实验分支设成 preview/<branch>，就只写自己的目录，不碰线上对象。
+ */
+const r2KeyPrefix = (process.env.R2_KEY_PREFIX ?? '').replace(/^\/+|\/+$/g, '')
+const objectKey = (path: string) => (r2KeyPrefix ? `${r2KeyPrefix}/${path}` : path)
+
 // 解析命令行参数
 function parseArgs() {
   const args = process.argv.slice(2)
@@ -121,6 +128,9 @@ async function main() {
       ? `✓ 该日期已存在：EP${episodeNumber}${forced ? '，将强制重新生成' : ''}`
       : `✓ 新期：分配 EP${episodeNumber}`
   )
+  if (r2KeyPrefix) {
+    console.log(`✓ R2 前缀: ${r2KeyPrefix}/（写到这里，不覆盖线上对象）`)
+  }
 
   if (dryRun) {
     console.log(`✓ dry-run：跳过抓取、生成、上传和写文件\n`)
@@ -167,7 +177,7 @@ async function main() {
   assertChineseOutput(blueprint.episode_overview.description, 'Blueprint 简介', 0.4)
 
   // Step 2.1 Save Blueprint to R2 (skip in local mode)
-  const blueprintKey = `episodes/${episodeNumber}/blueprint.json`
+  const blueprintKey = objectKey(`episodes/${episodeNumber}/blueprint.json`)
   if (!local) {
     await putObject(blueprintKey, JSON.stringify(blueprint, null, 2), {
       contentType: 'application/json; charset=utf-8',
@@ -197,7 +207,7 @@ async function main() {
   console.log(`✅ Cover Image 已保存到临时目录: ${coverImagePath}`)
 
   if (!local) {
-    const coverImageKey = `episodes/${episodeNumber}/cover.${cover.ext}`
+    const coverImageKey = objectKey(`episodes/${episodeNumber}/cover.${cover.ext}`)
     await putObject(coverImageKey, new Uint8Array(cover.data), {
       contentType: cover.contentType,
       cacheControl: CACHE_IMMUTABLE,
@@ -281,7 +291,7 @@ async function main() {
 
   if (!local) {
     // Step 5.0: 完整脚本（含时间轴）上传 R2
-    const scriptKey = `episodes/${episodeNumber}/script.json`
+    const scriptKey = objectKey(`episodes/${episodeNumber}/script.json`)
     await putObject(scriptKey, JSON.stringify(scriptWithTimeline, null, 2), {
       contentType: 'application/json; charset=utf-8',
       cacheControl: CACHE_SHORT,
@@ -291,7 +301,7 @@ async function main() {
     // Step 5.1: 上传音频到 R2
     console.log('\n📤 上传音频到 R2...')
     const audioBuffer = await readFile(audioPath)
-    const audioKey = `episodes/${episodeNumber}/audio.mp3`
+    const audioKey = objectKey(`episodes/${episodeNumber}/audio.mp3`)
     await putObject(audioKey, new Uint8Array(audioBuffer), {
       contentType: 'audio/mpeg',
       cacheControl: CACHE_IMMUTABLE,
@@ -315,10 +325,12 @@ async function main() {
   // R2 公开域名不发 Cache-Control，浏览器会把同名文件一直用缓存。
   // 带上版本号，重跑同一期时播放器和封面才会去拉新文件。
   const assetVersion = `v=${Date.now()}`
-  const audioUrl = local ? '' : `${r2PublicUrl}/episodes/${episodeNumber}/audio.mp3?${assetVersion}`
+  const audioUrl = local
+    ? ''
+    : `${r2PublicUrl}/${objectKey(`episodes/${episodeNumber}/audio.mp3`)}?${assetVersion}`
   const coverImageUrl = local
     ? ''
-    : `${r2PublicUrl}/episodes/${episodeNumber}/cover.${cover.ext}?${assetVersion}`
+    : `${r2PublicUrl}/${objectKey(`episodes/${episodeNumber}/cover.${cover.ext}`)}?${assetVersion}`
   const markdown = await convertScriptToMarkdown(
     scriptWithTimeline,
     blueprint,
