@@ -34,6 +34,7 @@ export async function synthesizeSpeech(
   text: string,
   voiceName: string,
   emotion: string = 'neutral',
+  persona = '',
   retries = 4
 ): Promise<Buffer> {
   const apiKey = process.env.MIMO_API_KEY
@@ -42,7 +43,8 @@ export async function synthesizeSpeech(
   const cleanText = text.replace(/\s+/g, ' ').trim()
   if (!cleanText) throw new Error('合成文本为空')
 
-  const style = EMOTION_STYLES[emotion] ?? STYLE_FALLBACK
+  const emotionStyle = EMOTION_STYLES[emotion] ?? STYLE_FALLBACK
+  const style = persona ? `${persona} ${emotionStyle}` : emotionStyle
 
   const body = {
     model: MODEL,
@@ -70,9 +72,9 @@ export async function synthesizeSpeech(
       if (!response.ok) {
         const detail = await response.text()
         const error = new Error(`MiMo TTS HTTP ${response.status}: ${detail}`)
-        // 429 和 5xx 值得再试，其余 4xx（鉴权、参数）重试也没用
-        const retryable = response.status === 429 || response.status >= 500
-        if (!retryable) throw error
+        // 鉴权失败、余额不足重试没用；其余错误（含上游偶发的 400 断连）都值得再试
+        const fatal = [401, 402, 403].includes(response.status)
+        if (fatal) throw error
         lastError = error
       } else {
         const data = (await response.json()) as {
@@ -84,12 +86,8 @@ export async function synthesizeSpeech(
       }
     } catch (error) {
       lastError = error
-      // 参数错误、缺 key 这类不是网络抖动，直接抛
-      if (
-        error instanceof Error &&
-        /HTTP 4\d\d/.test(error.message) &&
-        !/HTTP 429/.test(error.message)
-      ) {
+      // 缺 key、余额、鉴权这类不是网络抖动，直接抛
+      if (error instanceof Error && /HTTP (401|402|403)/.test(error.message)) {
         throw error
       }
     }

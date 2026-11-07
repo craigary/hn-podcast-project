@@ -16,10 +16,15 @@ const useMimo = TTS_PROVIDER !== 'azure'
 /** MiMo 输出偏慢，统一加速到 1.25 倍；atempo 只改速度不改音高 */
 const MIMO_SPEED = 1.25
 
-type Synthesizer = (text: string, voice: string, emotion: string) => Promise<Buffer>
+type Synthesizer = (
+  text: string,
+  voice: string,
+  emotion: string,
+  persona: string
+) => Promise<Buffer>
 
 const synthesizeLine: Synthesizer = useMimo
-  ? (text, voice, emotion) => synthesizeMimoSpeech(text, voice, emotion)
+  ? (text, voice, emotion, persona) => synthesizeMimoSpeech(text, voice, emotion, persona)
   : (text, voice) => synthesizeAzureSpeech(text, voice, 'general')
 
 interface FullScript {
@@ -112,7 +117,7 @@ export const processSectionVoice = async (
     const voice = useMimo ? host.mimoVoice : host.voice
 
     try {
-      const buffer = await synthesize(line.text, voice, line.emotion)
+      const buffer = await synthesize(line.text, voice, line.emotion, host.mimoStyle)
       const filePath = path.join(tmpDir, `${prefix}_line_${index}.mp3`)
 
       if (useMimo) {
