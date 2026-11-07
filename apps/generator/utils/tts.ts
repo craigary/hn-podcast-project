@@ -1,4 +1,5 @@
-import { synthesizeSpeech } from './azure-tts'
+import { synthesizeSpeech as synthesizeAzureSpeech } from './azure-tts'
+import { synthesizeSpeech as synthesizeMimoSpeech } from './mimo-tts'
 import { podcastConfig } from '@hn/config'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -7,6 +8,21 @@ import { execa } from 'execa'
 import { readdir, writeFile, mkdir, rm } from 'fs/promises'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+/** TTS 供应商。默认用 MiMo，设 TTS_PROVIDER=azure 回退到旧链路。 */
+const TTS_PROVIDER = (process.env.TTS_PROVIDER ?? 'mimo').toLowerCase()
+const useMimo = TTS_PROVIDER !== 'azure'
+
+type Synthesizer = (
+  text: string,
+  voice: string,
+  emotion: string,
+  persona: string
+) => Promise<Buffer>
+
+const synthesizeLine: Synthesizer = useMimo
+  ? (text, voice, emotion, persona) => synthesizeMimoSpeech(text, voice, emotion, persona)
+  : (text, voice) => synthesizeAzureSpeech(text, voice, 'general')
 
 interface FullScript {
   intro: SegmentScript
@@ -82,7 +98,7 @@ export const processSectionVoice = async (
   prefix: string,
   tmpDir: string,
   {
-    synthesize = synthesizeSpeech,
+    synthesize = synthesizeLine,
     write = writeFile,
     getDuration = getAudioDuration,
     config = podcastConfig,
@@ -95,10 +111,10 @@ export const processSectionVoice = async (
     console.log(`  🎙️ [语音合成] 正在处理 ${prefix} 序号: ${index + 1}/${lines.length}...`)
 
     const host = line.speaker === config.hosts.female.name ? config.hosts.female : config.hosts.male
-    const style = 'general'
+    const voice = useMimo ? host.mimoVoice : host.voice
 
     try {
-      const buffer = await synthesize(line.text, host.voice, style)
+      const buffer = await synthesize(line.text, voice, line.emotion, host.mimoStyle)
       const filePath = path.join(tmpDir, `${prefix}_line_${index}.mp3`)
       await write(filePath, new Uint8Array(buffer))
       const duration = await getDuration(filePath)
@@ -126,7 +142,9 @@ export const generatePodcastAudio = async (
   outputFileName: string,
   coverImagePath?: string
 ): Promise<{ audioPath: string; scriptWithTimeline: FullScriptWithTimeline }> => {
-  console.log(`\n🔊 [音频合成] 启动高级音频合成 (Fluent-FFmpeg + 情感 TTS)...`)
+  console.log(
+    `\n🔊 [音频合成] 启动高级音频合成 (Fluent-FFmpeg + 情感 TTS / ${useMimo ? 'MiMo' : 'Azure'})...`
+  )
   const startTime = performance.now()
 
   // 创建临时工作目录

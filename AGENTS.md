@@ -7,7 +7,7 @@
 - 项目名：`hn-podcast-project`（HN 瞎聊）
 - 类型：`bun workspace` monorepo
 - 语言：TypeScript（前端 Astro + 生成器 Bun 脚本）
-- 核心链路：抓取 HN 热门 -> AI 生成大纲与对话 -> Azure TTS + FFmpeg 合成音频 -> 上传 R2 -> 生成 episode markdown -> Astro 站点展示与 RSS 输出
+- 核心链路：抓取 HN 热门 -> AI 生成大纲与对话 -> MiMo TTS（可回退 Azure）+ FFmpeg 合成音频 -> 上传 R2 -> 生成 episode markdown -> Astro 站点展示与 RSS 输出
 
 ## 1) 工作区结构
 
@@ -51,7 +51,7 @@ packages/
 
 - `--date`、`--episode`、`--force`、`--local`、`--dry-run` 在 `apps/generator/main.ts` 中解析
 - `--episode` 与 `--date` 互斥；`--episode` 自带 `--force` 语义
-- `R2_KEY_PREFIX` 环境变量给所有上传加前缀；实验分支用 `preview/<branch>` 就不会覆盖线上对象
+- `R2_KEY_PREFIX` 环境变量给所有上传加前缀；预览/实验统一用 `preview`，就不会覆盖线上对象
 - 若未指定 `--date`，默认取最近一个已经到来的周二（北京时间）
 - 期号是发布序号，由 `apps/web/src/content/episodes/index.json` 分配；同一日期重跑复用原编号
 - 新期 markdown 写入 `apps/web/src/content/episodes/{number}.md`
@@ -77,7 +77,7 @@ packages/
    4.5 `intel`：只对 blueprint 选中的故事批量提取「冲突 + 原话」（1 次 LLM 调用）
 5. `image`：生成封面提示词，用 Workers AI（FLUX.2 Dev）出图，失败回落默认封面
 6. `script`：生成 intro / segment / outro 对话脚本
-7. `tts`：Azure TTS 合成语音，FFmpeg 混音、转场、封面嵌入
+7. `tts`：MiMo TTS 合成语音（`TTS_PROVIDER=azure` 可回退），FFmpeg 混音、转场、封面嵌入
 8. 上传 `audio.mp3`、`cover.png`、`script.json`、`blueprint.json` 到 R2
 9. 转换为 Astro content markdown，写入 `apps/web/src/content/episodes/{number}.md`
 10. 发布成功后写入 `index.json`（失败或本地模式不消耗编号）
@@ -100,6 +100,7 @@ packages/
 
 - AI：
   - `SUPERLINKED_API_KEY`（DeepSeek V4.1 Flash，主力模型）
+  - `MIMO_API_KEY`（MiMo TTS 语音合成）
   - `EXA_API_KEY`（HN 页面抓取/摘要）
   - `CF_API_TOKEN` / `CF_ACCOUNT_ID`（Cloudflare Workers AI 封面生成）
 - Cloudflare：
@@ -153,7 +154,7 @@ GitHub Actions：
    - 已有 `apps/web/src/content/episodes/*.md` 示例
 4. 涉及音频失败时优先排查：
    - `ffmpeg/ffprobe` 是否可用
-   - Azure TTS 接口返回
+   - MiMo / Azure TTS 接口返回
    - R2/KV 凭据是否齐全
 5. 除非任务明确要求，不要改动历史 workflow 行为与 secrets 命名。
 
