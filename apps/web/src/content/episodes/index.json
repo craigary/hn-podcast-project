@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "nextNumber": 115,
+  "nextNumber": 116,
   "episodes": [
     {
       "number": 1,
@@ -570,6 +570,11 @@
     {
       "number": 114,
       "date": "2026-11-03",
+      "status": "published"
+    },
+    {
+      "number": 115,
+      "date": "2026-11-10",
       "status": "published"
     }
   ]
