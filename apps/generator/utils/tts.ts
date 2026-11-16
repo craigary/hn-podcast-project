@@ -9,9 +9,9 @@ import { readdir, writeFile, mkdir, rm } from 'fs/promises'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-/** TTS 供应商。默认用 MiMo，设 TTS_PROVIDER=azure 回退到旧链路。 */
-const TTS_PROVIDER = (process.env.TTS_PROVIDER ?? 'mimo').toLowerCase()
-const useMimo = TTS_PROVIDER !== 'azure'
+/** TTS 供应商。默认用微软（Edge 同源）免费 TTS，设 TTS_PROVIDER=mimo 切到 MiMo。 */
+const TTS_PROVIDER = (process.env.TTS_PROVIDER ?? 'azure').toLowerCase()
+const useMimo = TTS_PROVIDER === 'mimo'
 
 /** MiMo 输出偏慢，统一加速到 1.25 倍；atempo 只改速度不改音高 */
 const MIMO_SPEED = 1.25
